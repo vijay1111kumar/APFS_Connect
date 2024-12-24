@@ -1,0 +1,24 @@
+id:
+  type: str
+  mandatory: true
+is_active:
+  type: bool
+  mandatory: true
+start:
+  type: str
+  mandatory: true
+end:
+  type: str
+  mandatory: true
+trigger:
+  type: str
+  mandatory: true
+dataset:
+  type: str
+  mandatory: false
+steps:
+  type: list
+  mandatory: true
+next_flow:
+  type: str
+  mandatory: false
