@@ -43,7 +43,6 @@ class LogManager:
         self.log_dir = log_dir
         os.makedirs(log_dir, exist_ok=True)
 
-        # Logging levels
         self.console_level = getattr(logging, settings.CONSOLE_LOG_LEVEL, logging.DEBUG)
         self.file_level = getattr(logging, settings.FILE_LOG_LEVEL, logging.INFO)
         self._initialize_loggers()
@@ -60,7 +59,8 @@ class LogManager:
             "global_registry": "global_registry.log",
             "webhook": "webhook.log",
             "messages": "messages.log",
-            "server": "server.log"
+            "server": "server.log",
+            "validators": "validators.py",
         }
 
 
