@@ -1,0 +1,32 @@
+High-Level Design
+
+Key Responsibilities of the Batch Processor
+
+Uploader:
+    Accept and validate Excel files.
+    Parse data into actionable formats.
+    Support different schemas for Promotions, Reminders, and Publish actions.
+
+Promotions:
+    Send messages (text, image, video, audio, etc.) or initiate flows.
+    Track responses for interactive flows.
+
+Reminders:
+    Schedule messages to be sent at specific dates and times.
+    Handle scheduling and dispatching of messages.
+
+Publish:
+    Bulk-send messages to users immediately.
+    Support various message formats.
+
+
+DIR Structure:
+    APFS_Connect/
+    ├── batch_processor/
+    │   ├── __init__.py
+    │   ├── uploader.py           # Handles file uploads and parsing
+    │   ├── promotions.py         # Logic for promotions
+    │   ├── reminders.py          # Logic for reminders
+    │   ├── publish.py            # Logic for publishing
+    │   ├── scheduler.py          # Scheduler for reminders
+    │   ├── batch_processor.py    # Main interface for batch processing
