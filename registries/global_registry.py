@@ -1,15 +1,37 @@
 import os
 import sys
 import json
+import importlib.util
 
-from typing import Dict, Optional, Any, List
+from typing import Dict, Optional, Any, List, Callable
 
-sys.path.append("../APFS_Connect/")
+sys.path.append("../")
 from utils.logger import LogManager
 
+PROCESSOR_DIR = "processors"
 log_manager = LogManager()
 logger = log_manager.get_logger("global_registry")
 
+def get_functions_from_script(script_path: str) -> Dict[str, Callable]:
+
+    functions = {}
+    if not os.path.exists(script_path):
+        return functions
+    
+    module_name = os.path.splitext(os.path.basename(script_path))[0]
+    try:
+        spec = importlib.util.spec_from_file_location(module_name, script_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if callable(attr) and attr.__module__ == module_name:
+                functions[attr_name] = attr
+    except Exception as e:
+        raise RuntimeError(f"Failed to load functions from script '{script_path}': {e}")
+
+    return functions
 
 class GlobalRegistry:
     def __init__(self) -> None:
@@ -18,83 +40,61 @@ class GlobalRegistry:
         self.flow_processors: Dict[str, List[str]] = {}
         self.processors: Dict[str, Any] = {}
 
-    def load_flows(self, flow_dir: str="/home/loan2wheels/LOS/APFS_Connect/datasets/flows") -> None:
-        self.clear_registry()
-        try:
-            for file_name in os.listdir(flow_dir):
+    def load_flows(self, flow_dir: str="/home/loan2wheels/LOS/APFS_Connect/flows") -> None:
+        from utils.validators import FlowValidator
+        validator = FlowValidator()
+        validated_flows = []
+
+        for file_name in os.listdir(flow_dir):
+            try:
                 file_path = os.path.join(flow_dir, file_name)
-
-                if not self.validate_flow(file_path):
-                    continue
-
                 with open(file_path, "r") as f:
                     flow = json.load(f)
 
-                self.register_flow(flow)
-            logger.info(f"Successfully loaded {len(self.flows)} flows.")
-        except Exception as e:
-            logger.error(f"Error loading flows: {e}")
+                invalid_file = validator.validate_flow(flow) == False
+                if invalid_file:    
+                    self.invalidate_file(file_path)
+                    continue
+                    
+                validated_flows.append(flow)
 
-    def validate_flow(self, file_path: str) -> bool:
-        file_name = os.path.basename(file_path)
+            except Exception as e:
+                logger.error(f"Failed to validate flow: {file_name},  Error: {e}")
 
-        if not file_name.endswith(".json"):
-            logger.warning(f"Invalid file extension: {file_name}")
-            self.invalidate_file(file_path, reason="Invalid file extension")
-            return False
+        self.clear_registry()
+        self.register_global_processors()
+        for valid_flow in validated_flows:
+            self.register_flow(valid_flow)
+            logger.info(f"Successfully loaded {valid_flow.get('id')}")
 
-        try:
-            with open(file_path, "r") as f:
-                flow = json.load(f)
-        except json.JSONDecodeError:
-            logger.warning(f"Invalid JSON format: {file_name}")
-            self.invalidate_file(file_path, reason="Invalid JSON format")
-            return False
-
-        flow_id = flow.get("id")
-        if not flow_id:
-            logger.warning(f"Flow ID missing: {file_name}")
-            self.invalidate_file(file_path, reason="Flow ID missing")
-            return False
-
-        if flow_id in self.flows:
-            logger.warning(f"Duplicate flow ID: {flow_id} in {file_name}")
-            self.invalidate_file(file_path, reason="Duplicate flow ID")
-            return False
-
-        trigger = flow.get("trigger")
-        if trigger and trigger in self.triggers:
-            conflicting_flow_id = self.triggers[trigger]
-            logger.warning(
-                f"Conflicting trigger '{trigger}' found in {file_name} "
-                f"and flow ID: {conflicting_flow_id}"
-            )
-            self.invalidate_file(file_path, reason="Conflicting trigger")
-            return False
-
-        return True
-
-    def invalidate_file(self, file_path: str, reason: str) -> None:
+    def invalidate_file(self, file_path: str) -> None:
         directory, file_name = os.path.split(file_path)
         invalid_file_path = os.path.join(directory, f".{file_name}")
         os.rename(file_path, invalid_file_path)
-        logger.error(f"File invalidated: {file_path}. Reason: {reason}")
+        logger.error(f"File invalidated: {file_path}")
 
-    def register_processor(self, name: str, function: Any) -> None:
-        self.processors[name] = function
-        logger.info(f"Processor '{name}' registered.")
+    def register_flow_processors(self, flow_id: str) -> None:
+        flow_processor_script_path = os.path.join(PROCESSOR_DIR, f"{flow_id}.py")
+        functions = get_functions_from_script(flow_processor_script_path)
+        self.flow_processors[flow_id] = functions
+        logger.info(f"Registered flow: {flow_id} processors({len(functions)})")
+
+    def register_global_processors(self) -> None:
+        global_processors_script_path = os.path.join(PROCESSOR_DIR, "processors.py")
+        functions = get_functions_from_script(global_processors_script_path)
+        self.processors = functions
+        logger.info(f"Registered global processors({len(functions)})")
 
     def register_flow(self, flow: Dict) -> None:
         flow_id = flow["id"]
         self.flows[flow_id] = flow
 
-        trigger = flow.get("trigger")
-        if trigger:
-            self.triggers[trigger] = flow_id
+        steps = flow.get("steps", [])
+        steps_by_id = {step["id"]: step for step in steps}
+        flow["steps_by_id"] = steps_by_id
 
-        processors = [step.get("processor", {}).get("name", "")
-                      for step in flow.get("steps", []) if "processor" in step]
-        self.flow_processors[flow_id] = [p for p in processors if p]
+        self.triggers[flow.get("trigger", "")] = flow_id
+        self.register_flow_processors(flow_id)
 
         logger.info(f"Flow '{flow_id}' registered.")
 
@@ -105,6 +105,11 @@ class GlobalRegistry:
         self.processors.clear()
         logger.info("Global registry cleared.")
 
+    def get_step_by_id(self, flow_id: str, step_id: str) -> Optional[Dict]:
+        flow = self.flows.get(flow_id, {})
+        step = flow.get("steps_by_id", {}).get(step_id, None)
+        return step
+
     def get_flow_by_trigger(self, trigger: str) -> Optional[Dict]:
         flow_id = self.triggers.get(trigger)
         return self.flows.get(flow_id) if flow_id else None
@@ -112,11 +117,8 @@ class GlobalRegistry:
     def get_processors_for_flow(self, flow_id: str) -> Optional[List[str]]:
         return self.flow_processors.get(flow_id)
 
-    def get_processor(self, name: str) -> Optional[Any]:
+    def get_processor_by_name(self, name: str) -> Optional[Any]:
         return self.processors.get(name)
-
-    def add_flow(self, flow: Dict) -> None:
-        self.register_flow(flow)
 
     def refresh_registry(self, flow_dir: str) -> None:
         self.load_flows(flow_dir)
