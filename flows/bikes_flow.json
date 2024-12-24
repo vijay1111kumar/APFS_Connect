@@ -1,0 +1,192 @@
+{
+    "name": "Buy Bike Flow",
+    "id": "bike_flow",
+    "trigger": "bike",
+    "start": "step1",
+    "end": "step6",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Welcome Message",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Welcome to Ducati Bikes!"
+            }
+        },
+        {
+            "id": "step2",
+            "name": "Bike Categories",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {"type": "text", "text": "Explore Ducati Bikes"},
+                    "body": {"text": "Choose a category to explore more:"},
+                    "footer": {"text": "Powered by Ducati"},
+                    "action": {
+                        "button": "View Options",
+                        "sections": [
+                            {
+                                "title": "Categories",
+                                "rows": [
+                                    {"id": "scrambler", "title": "Scrambler"},
+                                    {"id": "panigale", "title": "Panigale"},
+                                    {"id": "multistrada", "title": "Multistrada"}
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "processor": [{
+                "name": "process_bike_selection",
+                "wait": true,
+                "payload_template": {
+                    "user_id": "{{user_id}}",
+                    "id": "{{id}}",
+                    "value": "{{value}}"
+                }
+            }]
+        },
+        {
+            "id": "step3",
+            "name": "Confirm Bike",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step4",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "button",
+                    "header": {"type": "text", "text": "Liking what you see?"},
+                    "body": {"text": "Book your Test Ride Now!!!!"},
+                    "footer": {"text": "Powered by Ducati"},
+                    "action": {
+                        "buttons": [
+                            {
+                                "type": "reply",
+                                "reply": {
+                                    "id": "yes_button",
+                                    "title": "Yes"
+                                }
+                            },
+                            {
+                                "type": "reply",
+                                "reply": {
+                                    "id": "no_button",
+                                    "title": "No"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": "step4",
+            "name": "Select Location",
+            "sequence_no": 4,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step5",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {"type": "text", "text": "Select a Location"},
+                    "body": {"text": "Please choose a location for your test ride:"},
+                    "footer": {"text": "Powered by Ducati"},
+                    "action": {
+                        "button": "Choose Location",
+                        "sections": [
+                            {
+                                "title": "Locations",
+                                "rows": [
+                                    {"id": "location1", "title": "Koramangala, Bangalore"},
+                                    {"id": "location2", "title": "Whitefield, Bangalore"},
+                                    {"id": "location3", "title": "Jayanagar, Bangalore"}
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "processor": [{
+                "name": "process_location_selection",
+                "wait": true,
+                "payload_template": {
+                    "user_id": "{{user_id}}",
+                    "id": "{{id}}",
+                    "value": "{{value}}"
+                }
+            }]
+        },
+        {
+            "id": "step5",
+            "name": "Select Time Slot",
+            "sequence_no": 5,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step6",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {"type": "text", "text": "Select a Time Slot"},
+                    "body": {"text": "Choose a time slot for your test ride:"},
+                    "footer": {"text": "Powered by Ducati"},
+                    "action": {
+                        "button": "Choose Time Slot",
+                        "sections": [
+                            {
+                                "title": "Time Slots",
+                                "rows": [
+                                    {"id": "timeslot1", "title": "10:00 AM - 11:00 AM"},
+                                    {"id": "timeslot2", "title": "12:00 PM - 1:00 PM"},
+                                    {"id": "timeslot3", "title": "4:00 PM - 5:00 PM"}
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "processor": [{
+                "name": "process_time_slot_selection",
+                "wait": true,
+                "payload_template": {
+                    "user_id": "{{user_id}}",
+                    "id": "{{id}}",
+                    "value": "{{value}}"
+                }
+            }]
+        },
+        {
+            "id": "step6",
+            "name": "End Message",
+            "sequence_no": 6,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Thank you for exploring Ducati Bikes!"
+            }
+        }
+    ],
+    "is_active": true
+}

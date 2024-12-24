@@ -1,0 +1,44 @@
+{
+    "name": "Yo Baby",
+    "id": "yo_baby",
+    "trigger": "yo!!",
+    "start": "step1",
+    "end": "step2",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "love_at_first_sight",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Yo Baby!!"
+            },
+            "processor": []
+        },
+        {
+            "id": "step2",
+            "name": "send_heart",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Wassupp?"
+            },
+            "processor": [{
+                "wait": true,
+                "name": "process_love",
+                "payload_template": {
+                    "user_response": "{{user_response}}"
+                }
+            }]
+        }
+    ],
+    "is_active": true
+}

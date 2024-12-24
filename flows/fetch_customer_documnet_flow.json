@@ -1,0 +1,61 @@
+{
+    "name": "Get Documents Flow",
+    "id": "get_documents_flow",
+    "trigger": "documents",
+    "start": "step1",
+    "end": "step3",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Enter Loan ID",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Please enter your Loan ID to fetch the documents."
+            },
+            "processor": [{
+                "name": "process_loan_id",
+                "payload_template": {
+                    "loan_id": "{{user_response}}"
+                }
+            }]
+        },
+        {
+            "id": "step2",
+            "name": "Enter OTP",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Please enter the OTP sent to your phone number."
+            },
+            "processor": [{
+                "name": "process_otp",
+                "payload_template": {
+                    "otp": "{{user_response}}"
+                }
+            }]
+        },
+        {
+            "id": "step3",
+            "name": "Send Documents",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Your documents have been sent successfully!"
+            }
+        }
+    ],
+    "is_active": true
+}
