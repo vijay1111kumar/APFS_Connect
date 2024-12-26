@@ -15,15 +15,21 @@ class ReminderScheduler:
         self.scheduler = BackgroundScheduler()
 
     def schedule_reminder(self, user_id: str, message: str, schedule_time: datetime, retry_attempts: int, retry_interval: int):
-        for attempt in range(retry_attempts):
-            run_time = schedule_time + timedelta(minutes=attempt * retry_interval)
-            self.scheduler.add_job(self.send_reminder, 'date', run_date=run_time, args=[user_id, message, attempt + 1, retry_attempts])
-            logger.info(f"Job scheduled for {user_id} at {run_time}")
-        self.scheduler.print_jobs()
+        # Scheduling only the initial reminder
+        self.scheduler.add_job(self.send_reminder, 'date', run_date=schedule_time, args=[user_id, message, 1, retry_attempts, retry_interval])
 
-    def send_reminder(self, user_id: str, message: str, attempt: int, total_attempts: int):
-        logger.info(f"Reminder sent to {user_id}: {message}")
-        handle_content({"type": "text", "body": message}, user_id)
+    def send_reminder(self, user_id: str, message: str, attempt: int, total_attempts: int, retry_interval: int):
+        # Need to add support for flows too.
+        try:
+            handle_content({"type": "text", "body": message}, user_id)
+            logger.info(f"Reminder sent to {user_id}")
+        except Exception as e:
+            logger.error(f"Failed to send reminder to {user_id}: {e}")
+            if attempt >= total_attempts:
+                return
+        
+            next_attempt_time = datetime.now() + timedelta(minutes=retry_interval)
+            self.scheduler.add_job(self.send_reminder, 'date', run_date=next_attempt_time, args=[user_id, message, attempt + 1, total_attempts, retry_interval])
 
     def start(self):
         self.scheduler.start()
