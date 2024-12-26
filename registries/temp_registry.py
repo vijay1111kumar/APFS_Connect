@@ -1,5 +1,5 @@
 import sys
-sys.path.append("../APFS_Connect/")
+sys.path.append("../")
 
 from utils.logger import LogManager
 from typing import Dict, Optional, Any
@@ -14,15 +14,13 @@ class TempRegistry:
     def user_in_temp_registry(self, user_id: str) -> bool:
         return user_id in self.user_data.keys()
 
-    def save_user_state(self, user_id: str, flow_id: str, step: dict = {}) -> None:
+    def update_user_state(self, user_id: str, new_state: dict) -> None:
         if not self.user_in_temp_registry(user_id):
             self.user_data[user_id] = {}
-
-        self.user_data[user_id]["current_flow"] = flow_id
-        self.user_data[user_id]["current_step"] = step
-
-        if "steps_visited" not in self.user_data[user_id]:
-            self.user_data[user_id]["steps_visited"] = set()
+            return 
+        
+        existing_user_state = self.user_data.get(user_id, {})
+        self.user_data[user_id] = {**existing_user_state, **new_state}
         
     def clear_user_state(self, user_id: str) -> None:
         if self.user_in_temp_registry(user_id):
