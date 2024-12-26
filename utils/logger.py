@@ -60,7 +60,10 @@ class LogManager:
             "webhook": "webhook.log",
             "messages": "messages.log",
             "server": "server.log",
-            "validators": "validators.py",
+            "validators": "validators.log",
+            "remainders": "remainders.log",
+            "scheduler": "scheduler.log",
+            "uploader": "uploader.log",
         }
 
 
