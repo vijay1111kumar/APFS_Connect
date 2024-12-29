@@ -17,7 +17,7 @@ const Table = ({ data = [] }) => {
                 {header.replace(/_/g, " ")}
               </th>
             ))}
-            <th className="px-4 py-2 text-right"></th> {/* Align header for "View" button */}
+            <th className="px-4 py-2 text-right"></th> {/* Header for the "View" button */}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -31,14 +31,6 @@ const Table = ({ data = [] }) => {
                   {row[header]}
                 </td>
               ))}
-              <td className="whitespace-nowrap px-4 py-2 text-right">
-                <a
-                  href="#"
-                  className="inline-block rounded border border-gray-200 bg-white px-4 py-2 text-xs font-medium text-gray-700 hover:bg-indigo-700 hover:text-white"
-                >
-                  View
-                </a>
-              </td>
             </tr>
           ))}
         </tbody>
