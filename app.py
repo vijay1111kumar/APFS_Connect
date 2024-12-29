@@ -101,12 +101,159 @@ class FlowResource:
             resp.media = {"status": "error", "message": f"An error occurred: {str(e)}"}
             resp.status = falcon.HTTP_500
 
+class PromotionDetailsResource:
+    def on_get(self, req, resp, id):
+        promotion_details = {
+            "1": {
+                "name": "Summer Sale",
+                "created_on": "2023-01-01",
+                "created_by": "Admin",
+                "start_date": "2023-06-01",
+                "end_date": "2023-06-30",
+                "sent": 500,
+                "failed": 25,
+                "interacted": 300,
+                "unread": 100,
+                "message_type": "text",
+                "body": "50% off on all items!",
+                "body_url": "/static/images/winter_sale.png",
+                "header": "Summer Sale!",
+                "footer": "Hurry, offer ends soon!",
+                "flow_name": "Discount Flow",
+            },
+            "2": {
+                "name": "Winter Wonderland",
+                "created_on": "2023-02-01",
+                "created_by": "Marketing Team",
+                "start_date": "2023-12-01",
+                "end_date": "2023-12-31",
+                "sent": 400,
+                "failed": 50,
+                "interacted": 250,
+                "unread": 75,
+                "message_type": "image",
+                "body": "winter_sale.png",
+                "body_url": "/static/images/winter_sale.png",
+                "header": "Winter Wonderland!",
+                "footer": "Limited Time Only!",
+                "flow_name": "Seasonal Flow",
+            },
+        }
+
+        id = str(id)
+        if id not in promotion_details:
+            resp.status = falcon.HTTP_404
+            resp.media = {"error": "Promotion not found"}
+            return
+
+        resp.status = falcon.HTTP_200
+        resp.media = promotion_details[id]
+
+class PromotionUsersResource:
+    def on_get(self, req, resp, id):
+        # Dummy user details data for each promotion
+        promotion_users = {
+            "1": [
+                {
+                    "phone_no": "1234567890",
+                    "message_sent": True,
+                    "message_read": True,
+                    "user_interacted": True,
+                    "user_completed_flow": True,
+                    "user_cutoff_stage": "Step 1",
+                },
+                {
+                    "phone_no": "9876543210",
+                    "message_sent": True,
+                    "message_read": False,
+                    "user_interacted": True,
+                    "user_completed_flow": False,
+                    "user_cutoff_stage": "Step 3",
+                },
+                {
+                    "phone_no": "1122334455",
+                    "message_sent": False,
+                    "message_read": False,
+                    "user_interacted": False,
+                    "user_completed_flow": False,
+                    "user_cutoff_stage": "Step 1",
+                },
+            ],
+            "2": [
+                {
+                    "phone_no": "2233445566",
+                    "message_sent": True,
+                    "message_read": True,
+                    "user_interacted": True,
+                    "user_completed_flow": True,
+                    "user_cutoff_stage": None,
+                },
+                {
+                    "phone_no": "5566778899",
+                    "message_sent": False,
+                    "message_read": False,
+                    "user_interacted": False,
+                    "user_completed_flow": False,
+                    "user_cutoff_stage": "Step 2",
+                },
+            ],
+        }
+
+        if id not in promotion_users:
+            resp.status = falcon.HTTP_404
+            resp.media = {"error": "No users found for this promotion"}
+            return
+
+        resp.status = falcon.HTTP_200
+        resp.media = promotion_users[id]
+        return
+
+
+class UserDetailsResource:
+    def on_get(self, req, resp, id):
+        # Dummy data for user details
+        user_details = {
+            "1234567890": {
+                "profile_picture": "/static/images/user1.png",
+                "user_last_message": "Thank you!",
+                "user_completed_flow": True,
+                "user_cutoff_step": None,
+                "total_time_took_for_flow_completion": "5 minutes",
+                "user_average_message_delays": "2 seconds",
+                "conversation": [
+                    {"from": "user", "message": "Hi, I need help.", "timestamp": "2023-06-01T10:00:00Z"},
+                    {"from": "system", "message": "Sure, how can I assist you?", "timestamp": "2023-06-01T10:00:05Z"},
+                    {"from": "user", "message": "I want to know about the offer.", "timestamp": "2023-06-01T10:00:10Z"},
+                ],
+            },
+            "9876543210": {
+                "profile_picture": "/static/images/user2.png",
+                "user_last_message": "Not interested.",
+                "user_completed_flow": False,
+                "user_cutoff_step": "Step 3",
+                "total_time_took_for_flow_completion": None,
+                "user_average_message_delays": "N/A",
+                "conversation": [
+                    {"from": "user", "message": "I don't think this is for me.", "timestamp": "2023-06-02T15:00:00Z"},
+                ],
+            },
+        }
+
+        if id not in user_details:
+            resp.status = falcon.HTTP_404
+            resp.media = {"error": "User not found"}
+            return
+
+        resp.status = falcon.HTTP_200
+        resp.media = user_details[id]
+        return
+
 
 
 class AnalyticsAPI:
     def generate_dummy_users(self):
         return [
-            {"user_id": f"user_{i}", "messages_sent": random.randint(10, 100), "messages_received": random.randint(5, 50)}
+            {"id": f"user_{i}", "messages_sent": random.randint(10, 100), "messages_received": random.randint(5, 50)}
             for i in range(1, 11)
         ]
 
@@ -156,6 +303,7 @@ class AnalyticsAPI:
             {
                 "id": 1,
                 "name": "Diwali Promotion",
+                "description": "Diwali Offer, Zero processing fee",
                 "start_date": "2024-10-15",
                 "end_date": "2024-10-20",
                 "connect_flow": "Diwali Flow",
@@ -165,6 +313,7 @@ class AnalyticsAPI:
             {
                 "id": 2,
                 "name": "New Year Sale",
+                "description": "Interest Rate starting at just 9%",
                 "start_date": "2024-12-31",
                 "connect_flow": "New Year Flow",
                 "users_reached": 785,
@@ -174,6 +323,7 @@ class AnalyticsAPI:
             {
                 "id": 3,
                 "name": "Summer Promo",
+                "description": "Get a chance to win A/C",
                 "start_date": "2024-06-01",
                 "connect_flow": "Summer Flow",
                 "users_reached": 677,
@@ -353,7 +503,6 @@ app.add_route('/whatsapp', WhatsAppWebhook())
 app.add_route("/apfsconnect/api/analytics/flows/{id}", flow_resource)
 app.add_route("/apfsconnect/api/analytics/test", analytics, suffix="test")
 app.add_route("/apfsconnect/api/analytics/overview", analytics, suffix="overview")
-app.add_route("/apfsconnect/api/analytics/promotions", analytics, suffix="promotions")
 app.add_route("/apfsconnect/api/analytics/remainders", analytics, suffix="remainders")
 app.add_route("/apfsconnect/api/analytics/user-stats", analytics, suffix="user_stats")
 app.add_route("/apfsconnect/api/analytics/content-performance", analytics, suffix="content_performance")
@@ -362,6 +511,11 @@ app.add_route("/apfsconnect/api/analytics/error-failures", analytics, suffix="er
 app.add_route("/apfsconnect/api/analytics/team-productivity", analytics, suffix="team_productivity")
 app.add_route("/apfsconnect/api/analytics/flow-stats", analytics, suffix="flow_stats")
 app.add_route("/apfsconnect/api/analytics/summary", analytics, suffix="summary")
+
+app.add_route("/apfsconnect/api/analytics/promotions", analytics, suffix="promotions")
+app.add_route("/apfsconnect/api/analytics/promotions/{id}", PromotionDetailsResource())
+app.add_route("/apfsconnect/api/analytics/promotions/{id}/users", PromotionUsersResource())
+app.add_route("/apfsconnect/api/analytics/users/{id}", UserDetailsResource())
 
 log_manager = LogManager()
 logger = log_manager.get_logger("server")
