@@ -9,7 +9,7 @@ const Card = ({ title, current_value, past_value, trend }) => {
                 : "bg-gray-100 text-gray-500";
 
     return (
-        <article className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-6">
+        <article className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2">
             {trend && (
                 <div className={`inline-flex gap-2 self-end rounded p-1 ${trendClasses}`}>
                     <svg
@@ -32,7 +32,7 @@ const Card = ({ title, current_value, past_value, trend }) => {
             <div>
                 <strong className="block text-sm font-medium text-gray-500">{title}</strong>
                 <p>
-                    <span className="text-2xl font-semibold text-gray-900 pr-1">{current_value}</span>
+                    <span className="text-2xl sm:text-lg font-semibold text-gray-900 pr-1">{current_value}</span>
                     {past_value && (
                         <span className="text-xs text-gray-500"> from {past_value}</span>
                     )}
