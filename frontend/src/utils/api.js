@@ -34,3 +34,33 @@ export const fetchPromotions = async () => {
     throw error;
   }
 };
+
+export const fetchPromotionDetails = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/promotions/${id}`);
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch promotion details");
+    throw error;
+  }
+};
+
+export const fetchPromotionUsers = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/promotions/${id}/users`);
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch promotion users");
+    throw error;
+  }
+};
+
+export const fetchUserDetails = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/users/${id}`);
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch users details");
+    throw error;
+  }
+};
