@@ -15,13 +15,16 @@ const UserDetailsTable = ({ users }) => {
       {users.length > 0 ? (
         <Table
           data={users.map((user) => ({
+            Name: user.name || "User",
             Phone_no: user.phone_no,
-            Message_Sent: user.message_sent ? "✅" : "⛔️",
-            Message_Read: user.message_read ? "✅" : "⛔️",
+            Flow_Completed: user.flow_completed ? "Yes" : "No",
+            Interacted: user.interacted ? "Yes" : "No",
+            Message_Sent: user.message_sent ? "Yes" : "No",
+            Message_Read: user.message_read ? "Yes" : "No",
             Actions: (
               <button
                 onClick={() => handleViewClick(user.phone_no)}
-                className="inline-block rounded border border-gray-200 bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+                className="inline-block rounded border border-gray-200 bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-highlight"
               >
                 View
               </button>

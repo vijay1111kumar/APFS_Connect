@@ -18,7 +18,7 @@ const PromotionsTable = ({ promotions }) => {
           Actions: (
             <button
               onClick={() => handleViewClick(promo.id)}
-              className="inline-block rounded border border-gray-200 bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+              className="inline-block rounded border border-gray-200 bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-highlight"
             >
               View
             </button>
