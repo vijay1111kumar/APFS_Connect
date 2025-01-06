@@ -7,8 +7,11 @@ from typing import Dict, Optional, Any, List, Callable
 
 sys.path.append("../")
 from utils.logger import LogManager
+from utils.file_handler import read_json_file, update_json_file
 
 PROCESSOR_DIR = "processors"
+FLOW_DIR = "flows"
+ARCHIVE_DIR = "archive/flows"
 log_manager = LogManager()
 logger = log_manager.get_logger("global_registry")
 
@@ -40,32 +43,78 @@ class GlobalRegistry:
         self.flow_processors: Dict[str, List[str]] = {}
         self.processors: Dict[str, Any] = {}
 
-    def load_flows(self, flow_dir: str="/home/loan2wheels/LOS/APFS_Connect/flows") -> None:
+    def load_flows(self) -> None:
+        validated_flows = []
+        for file_name in os.listdir(FLOW_DIR):
+            self.load_flow(file_name)    
+            validated_flows.append(file_name)
+
+        if not validated_flows:
+            return
+        
+        # self.clear_registry()
+        self.register_global_processors()
+
+
+    def load_flow(self, flow_filename: str) -> None:
         from utils.validators import FlowValidator
         validator = FlowValidator()
-        validated_flows = []
 
-        for file_name in os.listdir(flow_dir):
-            try:
-                file_path = os.path.join(flow_dir, file_name)
-                with open(file_path, "r") as f:
-                    flow = json.load(f)
+        try:
+            file_path = os.path.join(FLOW_DIR, flow_filename)
+            with open(file_path, "r") as f:
+                flow = json.load(f)
 
-                invalid_file = validator.validate_flow(flow) == False
-                if invalid_file:    
-                    self.invalidate_file(file_path)
-                    continue
-                    
-                validated_flows.append(flow)
+            validation_error = validator.validate_flow(flow)
+            if validation_error:    
+                # self.invalidate_file(file_path)
+                return validation_error
 
-            except Exception as e:
-                logger.error(f"Failed to validate flow: {file_name},  Error: {e}")
+            self.register_flow(flow)
+            logger.info(f"Successfully loaded {flow.get('id')}")
+            return ""
+        
+        except Exception as e:
+            logger.error(f"Failed to validate flow: {flow_filename},  Error: {e}")
+            return f"Error: {e}"
 
-        self.clear_registry()
-        self.register_global_processors()
-        for valid_flow in validated_flows:
-            self.register_flow(valid_flow)
-            logger.info(f"Successfully loaded {valid_flow.get('id')}")
+    def deactivate_flow(self, flow_id: str) -> str:
+        flow_filename = f"{flow_id}.json"
+        file_path = os.path.join(FLOW_DIR, flow_filename)
+        archive_file_path = os.path.join(ARCHIVE_DIR, flow_filename)
+        
+        if not os.path.exists(file_path):
+            if os.path.exists(archive_file_path):
+                return f"Flow:{flow_id} is already inactive"
+            return f"Flow:{flow_id} does not exists, cannot deactivate."
+        
+        os.rename(file_path, archive_file_path)
+        self.unregister_flow(flow_id)
+        logger.info(f"Successfully Deactivated {flow_id}")
+        return ""
+
+    def update_flow(self, flow_id: str, updated_data: dict):
+        from utils.validators import FlowValidator
+        validator = FlowValidator()
+
+        try:
+            flow_filename = f"{flow_id}.json"
+            file_path = os.path.join(FLOW_DIR, flow_filename)
+            current_flow_data = read_json_file(file_path)
+            updated_flow_data = {**current_flow_data, **updated_data}
+
+            validation_error = validator.validate_flow(updated_flow_data)
+            if validation_error:    
+                return validation_error
+
+            update_json_file(file_path, updated_flow_data)
+            self.register_flow(updated_flow_data)
+            logger.info(f"Successfully updated {flow_id}")
+            return ""
+        
+        except Exception as e:
+            logger.error(f"Failed to validate flow: {flow_filename},  Error: {e}")
+            return f"Error: {e}"
 
     def invalidate_file(self, file_path: str) -> None:
         directory, file_name = os.path.split(file_path)
@@ -88,15 +137,20 @@ class GlobalRegistry:
     def register_flow(self, flow: Dict) -> None:
         flow_id = flow["id"]
         self.flows[flow_id] = flow
-
         steps = flow.get("steps", [])
         steps_by_id = {step["id"]: step for step in steps}
         flow["steps_by_id"] = steps_by_id
 
         self.triggers[flow.get("trigger", "")] = flow_id
         self.register_flow_processors(flow_id)
-
         logger.info(f"Flow '{flow_id}' registered.")
+
+    def unregister_flow(self, flow_id: str) -> None:
+        self.flows.pop(flow_id, None)
+        self.triggers.pop(flow_id, None)
+        self.processors.pop(flow_id, None)
+        self.flow_processors.pop(flow_id, None)
+        logger.info(f"Flow '{flow_id}' unregistered successfully.")
 
     def clear_registry(self) -> None:
         self.flows.clear()
