@@ -71,40 +71,48 @@ const CreatePromotionModal = ({ onClose }) => {
       {alert && <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
 
       <form className="space-y-4">
+
+        {/* Promotion Name */}
         <label className="block">
           <span className="text-sm font-medium text-gray-700">Promotional Name</span>
           <input
             type="text"
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus focus:border-focus sm:text-sm"
             placeholder="Enter promotion name"
             required
           />
         </label>
 
+        {/* Trigger On Date */}
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Trigger On Date</span>
             <input
               type="date"
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus focus:border-focus sm:text-sm"
               required
             />
           </label>
+
+          {/* Trigger At Time */}
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Trigger At Time</span>
             <input
               type="time"
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus focus:border-focus sm:text-sm"
               required
             />
           </label>
         </div>
 
+        {/* Category */}
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Category</span>
             <select
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus
+               focus:border-focus
+               sm:text-sm"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               required
@@ -114,10 +122,14 @@ const CreatePromotionModal = ({ onClose }) => {
               <option value="default">Default</option>
             </select>
           </label>
+
+          {/* Trigger On Date */}
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Message Type</span>
             <select
-              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus
+               focus:border-focus
+               sm:text-sm"
               value={messageType}
               onChange={(e) => setMessageType(e.target.value)}
             >
@@ -127,14 +139,14 @@ const CreatePromotionModal = ({ onClose }) => {
               <option value="video">Video</option>
             </select>
           </label>
-        </div>
 
-        {category !== "personalised" && (
-          <>
-            <label className="block">
+          {/* Flow */}
+          <label className="block col-span-2 ">
               <span className="text-sm font-medium text-gray-700">Flow</span>
               <select
-                className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus
+                 focus:border-focus
+                 sm:text-sm"
                 value={selectedFlow}
                 onChange={(e) => setSelectedFlow(e.target.value)}
                 required
@@ -147,20 +159,31 @@ const CreatePromotionModal = ({ onClose }) => {
               </select>
             </label>
 
+        </div>
+
+        {category !== "personalised" && (
+          <>
+
+            {/* Header */}
             <label className="block">
               <span className="text-sm font-medium text-gray-700">Header</span>
               <input
                 type="text"
-                className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus
+                 focus:border-focus
+                 sm:text-sm"
                 placeholder="Enter header"
               />
             </label>
 
+            {/* Message */}
             {messageType === "text" ? (
               <label className="block">
                 <span className="text-sm font-medium text-gray-700">Message</span>
                 <textarea
-                  className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus
+                   focus:border-focus
+                   sm:text-sm"
                   placeholder="Enter your message"
                   rows="4"
                 ></textarea>
@@ -169,17 +192,21 @@ const CreatePromotionModal = ({ onClose }) => {
               <FileUpload onFileChange={handleMessageFileChange} messageType={messageType} uploadedFile={uploadedFile} />
             )}
 
+            {/* Footer */}
             <label className="block">
               <span className="text-sm font-medium text-gray-700">Footer</span>
               <input
                 type="text"
-                className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-focus
+                 focus:border-focus
+                 sm:text-sm"
                 placeholder="Enter footer"
               />
             </label>
           </>
         )}
 
+        {/* Upload */}
         <FileUpload
           onFileChange={handleExcelFileChange}
           uploadedFile={excelFile}
@@ -197,7 +224,7 @@ const CreatePromotionModal = ({ onClose }) => {
           </button>
           <button
             type="submit"
-            className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-highlight"
           >
             Submit
           </button>

@@ -46,9 +46,9 @@ const PromotionsPage = () => {
         />
         <Insights totalStats={totalStats} />
         <PerformanceChart
-          promotions={promotions}
-          selectedPromotionId={selectedPromotionId}
-          onPromotionChange={setSelectedPromotionId}
+          records={promotions}
+          selectedId={selectedPromotionId}
+          onChange={setSelectedPromotionId}
         />
         <PromotionsTable promotions={promotions} />
         {isModalOpen && <PromotionsModal onClose={() => setIsModalOpen(false)} />}
