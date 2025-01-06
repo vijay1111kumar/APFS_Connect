@@ -23,15 +23,7 @@ const RadialChart = ({ title, data }) => {
   const chartLabels = filteredData.map((item) => item.label);
 
   // Updated color palette
-  const colorPalette = [
-    "#1C64F2",
-    "#16BDCA",
-    "#FDBA8C",
-    "#A78BFA",
-    "#34D399",
-    "#FBBF24",
-    "#F87171",
-  ];
+  const colorPalette = ["#d9dd92", "#eabe7c", "#dd6031", "#311e10"];
 
   // Chart options
   const chartOptions = {
