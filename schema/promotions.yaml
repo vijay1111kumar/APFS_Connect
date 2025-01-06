@@ -1,0 +1,33 @@
+name:
+  type: str
+  mandatory: true
+description:
+  type: str
+  mandatory: false
+connected_flow:
+  type: str
+  mandatory: false
+promotion_type:
+  type: str
+  mandatory: true
+header_message:
+  type: str
+  mandatory: true
+footer_message:
+  type: str
+  mandatory: false
+message_body_type:
+  type: enum
+  mandatory: true
+message_body:
+  type: str
+  mandatory: true
+is_active:
+  type: bool
+  mandatory: false
+created_by:
+  type: str
+  mandatory: true
+excel_file:
+  type: str
+  mandatory: false

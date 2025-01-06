@@ -1,0 +1,27 @@
+id:
+  type: str
+  mandatory: true
+name:
+  type: str
+  mandatory: true
+email:
+  type: str
+  mandatory: true
+phone:
+  type: str
+  mandatory: true
+role:
+  type: str
+  mandatory: true
+created_by:
+  type: str
+  mandatory: true
+created_at:
+  type: datetime
+  mandatory: false
+modified_by:
+  type: str
+  mandatory: false
+modified_at:
+  type: datetime
+  mandatory: false

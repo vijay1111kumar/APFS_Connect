@@ -1,0 +1,39 @@
+id:
+  type: str
+  mandatory: true
+name:
+  type: str
+  mandatory: true
+is_active:
+  type: bool
+  mandatory: false
+schedule_at:
+  type: datetime
+  mandatory: true
+activity_type:
+  type: enum
+  mandatory: true
+activity_id:
+  type: str
+  mandatory: true
+created_by:
+  type: str
+  mandatory: true
+created_at:
+  type: datetime
+  mandatory: false
+modified_by:
+  type: str
+  mandatory: false
+modified_at:
+  type: datetime
+  mandatory: false
+last_run_time:
+  type: datetime
+  mandatory: false
+last_run_by:
+  type: str
+  mandatory: false
+total_runs:
+  type: int
+  mandatory: false
