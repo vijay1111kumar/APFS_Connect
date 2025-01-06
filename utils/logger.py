@@ -64,6 +64,7 @@ class LogManager:
             "remainders": "remainders.log",
             "scheduler": "scheduler.log",
             "uploader": "uploader.log",
+            "database": "database.log"
         }
 
 
@@ -79,23 +80,25 @@ class LogManager:
         self, name: str, file_path: str, formatter: logging.Formatter, level: int
     ) -> None:
 
-        file_handler = RotatingFileHandler(file_path, maxBytes=10 * 1024 * 1024, backupCount=5)
-        file_handler.setFormatter(formatter)
-        file_handler.setLevel(level)
+        logger = self.get_logger(name)
 
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(
-            ColoredFormatter("%(asctime)s - %(levelname)s - %(message)s")
-        )
-        console_handler.setLevel(self.console_level)
+        if not logger or not logger.hasHandlers():
+            file_handler = RotatingFileHandler(file_path, maxBytes=10 * 1024 * 1024, backupCount=5)
+            file_handler.setFormatter(formatter)
+            file_handler.setLevel(level)
 
-        logger = logging.getLogger(name)
-        logger.setLevel(level)
-        logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
-        logger.propagate = False
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(
+                ColoredFormatter(" %(name)s -  %(asctime)s - %(levelname)s - %(message)s")
+            )
+            console_handler.setLevel(self.console_level)
 
-        self.loggers[name] = logger
+            logger.setLevel(level)
+            logger.addHandler(file_handler)
+            logger.addHandler(console_handler)
+            logger.propagate = False  
+
+            self.loggers[name] = logger
 
     def get_logger(self, name: str) -> logging.Logger:
         return self.loggers.get(name, logging.getLogger())
