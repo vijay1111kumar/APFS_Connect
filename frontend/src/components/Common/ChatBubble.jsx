@@ -4,30 +4,28 @@ const ChatBubble = ({ from, senderName, profilePicture, message, timestamp, stat
   const isUser = from === "user"; // Check if the message is from the user
 
   return (
-    <div className={`flex items-start gap-2.5 ${isUser ? "justify-start" : "justify-end"}`}>
+    <div className={`flex items-start pb-4 ${isUser ? "justify-end" : "justify-start"}`}>
       {/* Profile Picture */}
-      {isUser && (
         <img
-          className="w-8 h-8 rounded-full"
-          src={profilePicture || "/default-avatar.png"}
+          className="w-8 h-8 rounded-full me-2"
+          src={`${isUser ? profilePicture : "/avatar7.png"}`}
           alt={`${senderName || "User"}'s image`}
         />
-      )}
 
       {/* Message Bubble */}
-      <div className="flex flex-col w-full max-w-[320px] p-4 border-gray-200 bg-gray-100 rounded-xl dark:bg-gray-700">
-        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+      <div className="flex flex-col w-full max-w-[320px] p-2 px-4 border border-gray-200 bg-white rounded-lg dark:bg-gray-700">
+        <div className={`flex items-center justify-between space-x-2 mb-1 rtl:space-x-reverse`}>
+          <span className="text-sm font-semibold text-gray-600 dark:text-white">
             {senderName || "User"}
           </span>
-          <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+          <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
             {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
         </div>
 
         {/* Message Content */}
         {type === "text" && (
-          <p className="text-sm font-normal py-2.5 text-gray-900 dark:text-white">{message}</p>
+          <p className={`text-sm font-normal py-1.5 px-2 rounded-lg text-gray-900 bg-gray-100 dark:text-white`}>{message}</p>
         )}
         {type === "audio" && (
           <div className="flex items-center space-x-2 rtl:space-x-reverse py-2.5">
@@ -49,7 +47,6 @@ const ChatBubble = ({ from, senderName, profilePicture, message, timestamp, stat
               <rect y="17" width="3" height="6" rx="1.5" fill="#6B7280" />
               {/* Add other rectangles for the waveform */}
             </svg>
-            <span className="text-sm text-gray-900 dark:text-white">{status}</span>
           </div>
         )}
         {type === "image" && (
@@ -57,7 +54,7 @@ const ChatBubble = ({ from, senderName, profilePicture, message, timestamp, stat
             <img src={media} alt="Sent Media" className="rounded-lg" />
           </div>
         )}
-        <span className="text-sm font-normal text-gray-500 dark:text-gray-400">{status}</span>
+        
       </div>
     </div>
   );
