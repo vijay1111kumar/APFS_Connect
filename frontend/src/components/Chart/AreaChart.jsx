@@ -88,7 +88,7 @@ const AreaChart = ({ flowId }) => {
       type: "area",
       fontFamily: "Inter, sans-serif",
       dropShadow: { enabled: false },
-      toolbar: { show: false },
+    toolbar: { show: false },
     },
     tooltip: {
       enabled: true,
@@ -99,8 +99,8 @@ const AreaChart = ({ flowId }) => {
       gradient: {
         opacityFrom: 0.55,
         opacityTo: 0,
-        shade: "#1C64F2",
-        gradientToColors: ["#1C64F2"],
+        shade: "#DD6031",
+        gradientToColors: ["#ECE4B7"],
       },
     },
     dataLabels: { enabled: false },
@@ -123,7 +123,7 @@ const AreaChart = ({ flowId }) => {
     {
       name: "Users",
       data: chartData,
-      color: "#1A56DB",
+      color: "#D9DD92",
     },
   ];
 
@@ -204,7 +204,7 @@ const AreaChart = ({ flowId }) => {
                     <li key={period}>
                       <button
                         className={`block px-4 py-2 hover:bg-gray-100 w-full text-left ${
-                          period === timePeriod ? "font-bold text-blue-600" : ""
+                          period === timePeriod ? "font-bold text-highlight" : ""
                         }`}
                         onClick={() => handleTimePeriodChange(period)}
                       >
@@ -219,7 +219,7 @@ const AreaChart = ({ flowId }) => {
 
           <a
             href="#"
-            className="uppercase text-sm font-semibold inline-flex items-center text-blue-600 hover:text-blue-700"
+            className="uppercase text-sm font-semibold inline-flex items-center text-primary hover:text-highlight"
           >
             View Report
             <svg
