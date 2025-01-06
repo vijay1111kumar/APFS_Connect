@@ -1,94 +1,57 @@
 import React, { useEffect, useState } from "react";
-import DashboardLayout from "../components/Layout/DashboardLayout";
 import { fetchRemainders } from "../utils/api";
+import DashboardLayout from "../components/Layout/DashboardLayout";
+import Header from "../components/Common/Header";
+import PerformanceChart from "../components/Common/PerformanceChart";
+import Insights from "../components/Remainders/Insights";
+import RemaindersTable from "../components/Remainders/RemaindersTable";
+import RemaindersModal from "../components/Remainders/RemaindersModal";
 
 const RemaindersPage = () => {
-  const [reminders, setReminders] = useState(null);
+  const [remainders, setRemainders] = useState([]);
+  const [totalStats, setTotalStats] = useState({ total: 0, active: 0, scheduled: 0, completed: 0 });
+  const [selectedRemainderId, setSelectedRemainderId] = useState(null); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const getRemindersData = async () => {
+    const fetchData = async () => {
       try {
-        const { data } = await fetchRemainders();
-        setReminders(data);
+        const data = await fetchRemainders();
+        setRemainders(data);
+
+        if (data.length > 0) setSelectedRemainderId(data[0].id); 
+
+        setTotalStats({
+          total: data.length,
+          active: data.filter((remainder) => remainder.status === "Active").length,
+          scheduled: data.filter((remainder) => remainder.status === "Scheduled").length,
+          completed: data.filter((remainder) => remainder.status === "Completed").length,
+        });
       } catch (error) {
-        console.error("Error fetching reminders data:", error);
+        console.error("Error fetching Remainders:", error);
       }
     };
 
-    getRemindersData();
+    fetchData();
   }, []);
-
-  if (!reminders) return <div className="text-text">Loading...</div>;
 
   return (
     <DashboardLayout>
-      <div className="space-y-6" style={{ backgroundColor: 'theme("colors.background")' }}>
-        <h2 className="text-3xl font-bold text-text">Reminders Analytics</h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Total Reminders Sent */}
-          <div
-            className="block rounded-lg shadow-lg p-6 border"
-            style={{
-              backgroundColor: 'theme("colors.primary")',
-              borderColor: 'theme("colors.highlight")',
-            }}
-          >
-            <h3 className="text-xl font-semibold text-text">Total Reminders Sent</h3>
-            <p className="text-4xl font-bold" style={{ color: 'theme("colors.highlight")' }}>
-              {reminders.total_reminders_sent}
-            </p>
-          </div>
-
-          {/* Reminder Completion Rate */}
-          <div
-            className="block rounded-lg shadow-lg p-6 border"
-            style={{
-              backgroundColor: 'theme("colors.primary")',
-              borderColor: 'theme("colors.highlight")',
-            }}
-          >
-            <h3 className="text-xl font-semibold text-text">Completion Rate</h3>
-            <p className="text-4xl font-bold" style={{ color: 'theme("colors.highlight")' }}>
-              {reminders.completion_rate}
-            </p>
-          </div>
-
-          {/* Retry Analysis */}
-          <div
-            className="block rounded-lg shadow-lg p-6 border col-span-2"
-            style={{
-              backgroundColor: 'theme("colors.primary")',
-              borderColor: 'theme("colors.highlight")',
-            }}
-          >
-            <h3 className="text-xl font-semibold text-text">Retry Analysis</h3>
-            <ul className="mt-4 space-y-2">
-              <li className="flex justify-between">
-                <span className="font-medium text-text">Successful Retries</span>
-                <span className="font-bold text-text">{reminders.retry_analysis.successful_retries}</span>
-              </li>
-              <li className="flex justify-between">
-                <span className="font-medium text-text">Failed Retries</span>
-                <span className="font-bold text-text">{reminders.retry_analysis.failed_retries}</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Missed Reminders */}
-          <div
-            className="block rounded-lg shadow-lg p-6 border"
-            style={{
-              backgroundColor: 'theme("colors.primary")',
-              borderColor: 'theme("colors.highlight")',
-            }}
-          >
-            <h3 className="text-xl font-semibold text-text">Missed Reminders</h3>
-            <p className="text-4xl font-bold" style={{ color: 'theme("colors.highlight")' }}>
-              {reminders.missed_reminders}
-            </p>
-          </div>
-        </div>
+      <div className="space-y-6 p-6 rounded-lg border border-gray-200 bg-white">
+        <Header
+          title="Remainders"
+          description="Configure your Remainders here..."
+          buttonText="Create"
+          onButtonClick={() => setIsModalOpen(true)} 
+        />
+        <Insights totalStats={totalStats} />
+        <PerformanceChart
+          records={remainders}
+          selectedId={selectedRemainderId}
+          onChange={setSelectedRemainderId}
+        />
+        <RemaindersTable remainders={remainders} />
+        {isModalOpen && <RemaindersModal onClose={() => setIsModalOpen(false)} />}
       </div>
     </DashboardLayout>
   );
