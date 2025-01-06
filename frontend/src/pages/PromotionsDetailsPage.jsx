@@ -58,7 +58,11 @@ const PromotionsDetailsPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6 p-6 rounded-lg border border-gray-200 bg-white">
-        <Header title={promotionDetails.name} description={promotionDetails.description || "No description available."}/>
+        <Header 
+        title={promotionDetails.name}
+        description={promotionDetails.description || "No description available."}
+        buttonText="Re-Run"
+        />
         <div className="grid lg:grid-cols-3 md:grid-cols-2 md:col-span-full sm:grid-cols-1 gap-6">
           <DetailList title="Promotion Details" data={promotionDetails} />
           <DetailList title="Message Details" data={messageDetails} />
