@@ -9,10 +9,14 @@ module.exports = {
       },
       colors: {
         text: '#252525',
-        primary: '#FEFAE0',
+        base: "#F6F6F4",
+        base2: "#edede9",
+        primary: '#343633',
         secondary: '#FEFAE0',
         background: '#FEFFF8',
-        highlight: '#CCD5AE',
+        highlight: '#DD6031',
+        focus: "#D9DD92",
+        graph: "#D9DD92"
       },
     },
   },
