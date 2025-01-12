@@ -1,113 +1,366 @@
 import os
 import sys
+import json
 import falcon
 import random
-import json
 
-from falcon import media
-from werkzeug.utils import secure_filename
+from datetime import datetime
 from falcon_multipart.middleware import MultipartMiddleware
 
 from core.webhook import WhatsAppWebhook
 sys.path.append("../APFS_Connect/")
+from setup import global_registry
 from utils.logger import LogManager
+from utils.api import send_error, send_success
 
-
-
-# Directory to save uploaded files
+FLOW_DIR = "flows"
 UPLOAD_DIR = "upload"
+ARCHIVE_DIR = "archive/flows"
+os.makedirs(FLOW_DIR, exist_ok=True)
+os.makedirs(ARCHIVE_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Validation function (example placeholder)
-def validate_flow(file_path):
-    # Example validation logic
-    # Replace this with your actual validation logic
-    if file_path.endswith(".xlsx") or file_path.endswith(".xls"):
-        return {"status": "success", "message": "Flow validated successfully."}
-    else:
-        return {"status": "error", "message": "Invalid file format."}
+VALID_FIELDS = {
+    "name": str,
+    "trigger_message": str,
+    "total_steps": int,
+    "apis_connected": bool,
+    "connecting_flow": str,
+    "is_active": bool,
+}
 
-dates = [ "01 February", "02 February", "03 February", "04 February", "05 February", "06 February", "07 February", "08 February", "09 February", "10 February", "11 February", "12 February", "13 February", "14 February", "15 February", "16 February", "17 February", "18 February", "19 February", "20 February", "21 February", "22 February", "23 February", "24 February", "25 February", "26 February", "27 February", "28 February", "29 February", "30 February"]
 class FlowResource:
-    def on_get(self, req, resp, id):
-        mock_data = {
-            "1": {
-                "title": "Diwali Promotion",
-                "subtitle": "Offering zero processing fees",
-                "growth_rate": 12,
-                "values": [random.randint(1000, 6000) for i in range(30)],
-                "dates": dates,
-            },
-            "2": {
-                "title": "New Year Sale",
-                "subtitle": "Interest rates as low as 16%",
-                "growth_rate": -5,
-                "values": [random.randint(1000, 6000) for i in range(30)] ,
-                "dates": dates,
-            },
-            "4": {
-                "title": "Summer Promo",
-                "subtitle": "Chance to Win 2 ton A/C",
-                "growth_rate": -5,
-                "values": [random.randint(1000, 6000) for i in range(30)],
-                "dates": dates,
-            },
-        }
+    def __init__(self):
+        pass
 
-        # Get the data for the given flow ID
-        flow_data = mock_data.get(id, {"error": "Flow not found"})
-
-        resp.media = flow_data
-        resp.status = falcon.HTTP_200
-        
-    def on_post(self, req, resp):
-        # Parse the multipart form data
-        form = req.get_media()
+    def parse_request(self, req):
         try:
-            name = form.get("name")
-            date = form.get("date")
-            time = form.get("time")
-            flow = form.get("flow")
-            file = form.get("file")
+            data = req.media
+        except json.JSONDecodeError:
+            raise ValueError("Invalid JSON format.")
+        return data
 
-            # Ensure all required fields are present
-            if not all([name, date, time, flow, file]):
-                resp.media = {"status": "error", "message": "Missing required fields."}
-                resp.status = falcon.HTTP_400
-                return
+    def update_metadata(self, data, user="admin_user"):
+        now = datetime.now().isoformat()
+        data["modified_at"] = now
+        data["modified_by"] = user
+        return data
 
-            # Save the uploaded file
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(UPLOAD_DIR, filename)
 
-            with open(file_path, "wb") as f:
-                while True:
-                    chunk = file.stream.read(4096)
-                    if not chunk:
-                        break
-                    f.write(chunk)
+    def on_post(self, req, resp):
+        try:
 
-            # Validate the flow
-            validation_result = validate_flow(file_path)
+            flow_file = req.get_param('file')
+            flow_data = flow_file.file
 
-            if validation_result["status"] == "success":
-                resp.media = {"status": "success", "message": validation_result["message"]}
-                resp.status = falcon.HTTP_201
-            else:
-                resp.media = {"status": "error", "message": validation_result["message"]}
-                resp.status = falcon.HTTP_400
+            flow_json = json.load(flow_data)
+            flow_id = flow_json.get("id", "")
+            if not flow_id:
+                send_error("Flow file must have 'id' field")
+
+            flow_id = flow_id.lower().replace(" ", "_")
+            flow_filename = f"{flow_id}.json"
+            flow_path = os.path.join(FLOW_DIR, flow_filename)
+            flow_file_exists = os.path.exists(flow_path)
+            if flow_file_exists:
+                return send_error(resp, f"Flow with id '{flow_id}' already exists.")
+            
+            self.update_metadata(flow_json)
+            with open(flow_path, "w") as file:
+                json.dump(flow_json, file, indent=4)
+
+            error = global_registry.load_flow(flow_filename)
+            if error:
+                os.remove(flow_path)
+                return send_error(resp, error)
+            return send_success(resp, "Flow created successfully.")
+        
+        except json.JSONDecodeError:
+            return send_error(resp, "Invalid JSON file.")
+        except Exception as e:
+            return send_error(resp, str(e))
+
+    def on_patch(self, req, resp, flow_id):
+        try:
+            flow_path = os.path.join(FLOW_DIR, f"{flow_id}.json")
+            if not os.path.exists(flow_path):
+                return send_error(resp, f"Flow:{flow_id} not found.")
+
+            req_body = self.parse_request(req)
+            if req_body.get("is_active", "") == False:
+                deactivation_error = global_registry.deactivate_flow(flow_id)
+                if deactivation_error:
+                    send_error(resp, deactivation_error)
+                return send_success(resp, f"Flow: {flow_id} Deactivated Successfully")
+
+            self.update_metadata(req_body)
+            
+            updation_error = global_registry.update_flow(flow_id, req_body)
+            if updation_error:
+                return send_error(resp, updation_error)
+            
+            return send_success(resp, f"Flow '{flow_id}' updated successfully.")
 
         except Exception as e:
-            resp.media = {"status": "error", "message": f"An error occurred: {str(e)}"}
-            resp.status = falcon.HTTP_500
+            return send_error(resp, str(e))
 
-class PromotionDetailsResource:
+    def on_delete(self, req, resp, flow_id):
+        try:
+            flow_path = os.path.join(FLOW_DIR, f"{flow_id}.json")
+            if not os.path.exists(flow_path):
+                return send_error(resp, f"Flow '{flow_id}' not found.")
+
+            archive_path = os.path.join(ARCHIVE_DIR, f"{flow_id}.json")
+            os.rename(flow_path, archive_path)
+
+            # Remove flow from global registry
+            global_registry.flows.pop(flow_id, None)
+            global_registry.flow_processors.pop(flow_id, None)
+            global_registry.triggers.pop(flow_id, None)
+
+            return send_success(resp, f"Flow '{flow_id}' deleted successfully.")
+        except Exception as e:
+            return send_error(resp, str(e))
+
+    def on_get(self, req, resp, flow_id=None):
+        if flow_id:
+            flow_data = global_registry.flows.get(flow_id)
+            if not flow_data:
+                return send_error(resp, f"Flow '{flow_id}' not found.", status=falcon.HTTP_404)
+            return send_success(resp, flow_data)
+
+        return send_success(resp, list(global_registry.flows.values()))
+
+
+# class FlowResource:
+#     def on_get(self, req, resp, id):
+#         mock_data = {
+#             "1": {
+#                 "title": "Diwali Promotion",
+#                 "subtitle": "Offering zero processing fees",
+#                 "growth_rate": 12,
+#                 "values": [random.randint(1000, 6000) for i in range(30)],
+#                 "dates": dates,
+#             },
+#             "2": {
+#                 "title": "New Year Sale",
+#                 "subtitle": "Interest rates as low as 16%",
+#                 "growth_rate": -5,
+#                 "values": [random.randint(1000, 6000) for i in range(30)] ,
+#                 "dates": dates,
+#             },
+#             "4": {
+#                 "title": "Summer Promo",
+#                 "subtitle": "Chance to Win 2 ton A/C",
+#                 "growth_rate": -5,
+#                 "values": [random.randint(1000, 6000) for i in range(30)],
+#                 "dates": dates,
+#             },
+#         }
+
+#         # Get the data for the given flow ID
+#         flow_data = mock_data.get(id, {"error": "Flow not found"})
+
+#         resp.media = flow_data
+#         resp.status = falcon.HTTP_200
+        
+#     def on_post(self, req, resp):
+#         # Parse the multipart form data
+#         form = req.get_media()
+#         try:
+#             name = form.get("name")
+#             date = form.get("date")
+#             time = form.get("time")
+#             flow = form.get("flow")
+#             file = form.get("file")
+
+#             # Ensure all required fields are present
+#             if not all([name, date, time, flow, file]):
+#                 resp.media = {"status": "error", "message": "Missing required fields."}
+#                 resp.status = falcon.HTTP_400
+#                 return
+
+#             # Save the uploaded file
+#             filename = secure_filename(file.filename)
+#             file_path = os.path.join(UPLOAD_DIR, filename)
+
+#             with open(file_path, "wb") as f:
+#                 while True:
+#                     chunk = file.stream.read(4096)
+#                     if not chunk:
+#                         break
+#                     f.write(chunk)
+
+#             # Validate the flow
+#             validation_result = validate_flow(file_path)
+
+#             if validation_result["status"] == "success":
+#                 resp.media = {"status": "success", "message": validation_result["message"]}
+#                 resp.status = falcon.HTTP_201
+#             else:
+#                 resp.media = {"status": "error", "message": validation_result["message"]}
+#                 resp.status = falcon.HTTP_400
+
+#         except Exception as e:
+#             resp.media = {"status": "error", "message": f"An error occurred: {str(e)}"}
+#             resp.status = falcon.HTTP_500
+
+# class PromotionDetailsResource:
+#     def on_get(self, req, resp, id):
+#         promotion_details = {
+#             "1": {
+#                 "name": "Summer Sale",
+#                 "created_on": "2023-01-01",
+#                 "created_by": "Admin",
+#                 "start_date": "2023-06-01",
+#                 "end_date": "2023-06-30",
+#                 "sent": 500,
+#                 "failed": 25,
+#                 "interacted": 300,
+#                 "unread": 100,
+#                 "message_type": "text",
+#                 "body": "50% off on all items!",
+#                 "body_url": "/assets/images/avatars/avatar1.png",
+#                 "header": "Summer Sale!",
+#                 "footer": "Hurry, offer ends soon!",
+#                 "flow_name": "Discount Flow",
+#             },
+#             "2": {
+#                 "name": "Winter Wonderland",
+#                 "created_on": "2023-02-01",
+#                 "created_by": "Marketing Team",
+#                 "start_date": "2023-12-01",
+#                 "end_date": "2023-12-31",
+#                 "sent": 400,
+#                 "failed": 50,
+#                 "interacted": 250,
+#                 "unread": 75,
+#                 "message_type": "image",
+#                 "body": "winter_sale.png",
+#                 "body_url": "/assets/images/avatars/avatar2.png",
+#                 "header": "Winter Wonderland!",
+#                 "footer": "Limited Time Only!",
+#                 "flow_name": "Seasonal Flow",
+#             },
+#         }
+
+#         id = str(id)
+#         if id not in promotion_details:
+#             resp.status = falcon.HTTP_404
+#             resp.media = {"error": "Promotion not found"}
+#             return
+
+#         resp.status = falcon.HTTP_200
+#         resp.media = promotion_details[id]
+
+# class PromotionUsersResource:
+#     def on_get(self, req, resp, id):
+#         # Dummy user details data for each promotion
+#         promotion_users = {
+#             "1": [
+#                 {
+#                     "phone_no": "1234567890",
+#                     "message_sent": True,
+#                     "message_read": True,
+#                     "user_interacted": True,
+#                     "user_completed_flow": True,
+#                     "user_cutoff_stage": "Step 1",
+#                 },
+#                 {
+#                     "phone_no": "9876543210",
+#                     "message_sent": True,
+#                     "message_read": False,
+#                     "user_interacted": True,
+#                     "user_completed_flow": False,
+#                     "user_cutoff_stage": "Step 3",
+#                 },
+#                 {
+#                     "phone_no": "1122334455",
+#                     "message_sent": False,
+#                     "message_read": False,
+#                     "user_interacted": False,
+#                     "user_completed_flow": False,
+#                     "user_cutoff_stage": "Step 1",
+#                 },
+#             ],
+#             "2": [
+#                 {
+#                     "phone_no": "2233445566",
+#                     "message_sent": True,
+#                     "message_read": True,
+#                     "user_interacted": True,
+#                     "user_completed_flow": True,
+#                     "user_cutoff_stage": None,
+#                 },
+#                 {
+#                     "phone_no": "5566778899",
+#                     "message_sent": False,
+#                     "message_read": False,
+#                     "user_interacted": False,
+#                     "user_completed_flow": False,
+#                     "user_cutoff_stage": "Step 2",
+#                 },
+#             ],
+#         }
+
+#         if id not in promotion_users:
+#             resp.status = falcon.HTTP_404
+#             resp.media = {"error": "No users found for this promotion"}
+#             return
+
+#         resp.status = falcon.HTTP_200
+#         resp.media = promotion_users[id]
+#         return
+
+
+# class PromotionUserDetailsResource:
+#     def on_get(self, req, resp, id):
+#         # Dummy data for user details
+#         user_details = {
+#             "1234567890": {
+#                 "user_name": "Carrol Shelby",
+#                 "profile_picture": "/avatar1.png",
+#                 "user_last_message": "Thank you!",
+#                 "user_completed_flow": True,
+#                 "user_cutoff_step": None,
+#                 "total_time_took_for_flow_completion": "5 minutes",
+#                 "user_average_message_delays": "2 seconds",
+#                 "conversation": [
+#                     {"from": "user", "sender_name": "Carrol Shelby", "message": "Hi, I need help.", "timestamp": "2023-06-01T10:00:00Z"},
+#                     {"from": "system", "sender_name": "APFS", "message": "Sure, how can I assist you?", "timestamp": "2023-06-01T10:00:05Z"},
+#                     {"from": "user", "sender_name": "Carrol Shelby", "message": "I want to know about the offer.", "timestamp": "2023-06-01T10:00:10Z"},
+#                     {"from": "user", "sender_name": "Carrol Shelby", "message": "I want to know about the offer.", "timestamp": "2023-06-01T10:00:10Z"},
+#                 ],
+#             },
+#             "9876543210": {
+#                 "profile_picture":"/avatar2.png",
+#                 "user_last_message": "Not interested.",
+#                 "user_completed_flow": False,
+#                 "user_cutoff_step": "Step 3",
+#                 "total_time_took_for_flow_completion": None,
+#                 "user_average_message_delays": "N/A",
+#                 "conversation": [
+#                     {"from": "user", "message": "I don't think this is for me.", "timestamp": "2023-06-02T15:00:00Z"},
+#                 ],
+#             },
+#         }
+
+#         if id not in user_details:
+#             resp.status = falcon.HTTP_404
+#             resp.media = {"error": "User not found"}
+#             return
+
+#         resp.status = falcon.HTTP_200
+#         resp.media = user_details[id]
+#         return
+
+class RemaindersDetailsResource:
     def on_get(self, req, resp, id):
         promotion_details = {
             "1": {
-                "name": "Summer Sale",
+                "name": "January EMI Remainder",
                 "created_on": "2023-01-01",
-                "created_by": "Admin",
+                "created_by": "Shreyash",
                 "start_date": "2023-06-01",
                 "end_date": "2023-06-30",
                 "sent": 500,
@@ -115,16 +368,16 @@ class PromotionDetailsResource:
                 "interacted": 300,
                 "unread": 100,
                 "message_type": "text",
-                "body": "50% off on all items!",
-                "body_url": "/static/images/winter_sale.png",
-                "header": "Summer Sale!",
-                "footer": "Hurry, offer ends soon!",
+                "body": "Please keep enough balance in your account. Please Ignore if already paid.",
+                "body_url": "/assets/images/avatars/avatar1.png",
+                "header": "EMI due on coming 5th",
+                "footer": "Thanks & Regards, APFS.",
                 "flow_name": "Discount Flow",
             },
             "2": {
-                "name": "Winter Wonderland",
+                "name": "Loan Completion Kudos",
                 "created_on": "2023-02-01",
-                "created_by": "Marketing Team",
+                "created_by": "Accounts Team",
                 "start_date": "2023-12-01",
                 "end_date": "2023-12-31",
                 "sent": 400,
@@ -132,11 +385,11 @@ class PromotionDetailsResource:
                 "interacted": 250,
                 "unread": 75,
                 "message_type": "image",
-                "body": "winter_sale.png",
-                "body_url": "/static/images/winter_sale.png",
-                "header": "Winter Wonderland!",
-                "footer": "Limited Time Only!",
-                "flow_name": "Seasonal Flow",
+                "body": "We are offering you a Top-up Loan of 1 Lakh at 12%p.a",
+                "body_url": "/assets/images/avatars/avatar2.png",
+                "header": "Congratulations, You have paid all your dues.",
+                "footer": "Thanks & Regards, APFS.",
+                "flow_name": "Top up Flow",
             },
         }
 
@@ -149,7 +402,7 @@ class PromotionDetailsResource:
         resp.status = falcon.HTTP_200
         resp.media = promotion_details[id]
 
-class PromotionUsersResource:
+class RemaindersUsersResource:
     def on_get(self, req, resp, id):
         # Dummy user details data for each promotion
         promotion_users = {
@@ -209,25 +462,27 @@ class PromotionUsersResource:
         return
 
 
-class UserDetailsResource:
+class RemaindersUserDetailsResource:
     def on_get(self, req, resp, id):
         # Dummy data for user details
         user_details = {
             "1234567890": {
-                "profile_picture": "/static/images/user1.png",
+                "user_name": "Carrol Shelby",
+                "profile_picture": "/avatar1.png",
                 "user_last_message": "Thank you!",
                 "user_completed_flow": True,
                 "user_cutoff_step": None,
                 "total_time_took_for_flow_completion": "5 minutes",
                 "user_average_message_delays": "2 seconds",
                 "conversation": [
-                    {"from": "user", "message": "Hi, I need help.", "timestamp": "2023-06-01T10:00:00Z"},
-                    {"from": "system", "message": "Sure, how can I assist you?", "timestamp": "2023-06-01T10:00:05Z"},
-                    {"from": "user", "message": "I want to know about the offer.", "timestamp": "2023-06-01T10:00:10Z"},
+                    {"from": "user", "sender_name": "Carrol Shelby", "message": "Hi, I need help.", "timestamp": "2023-06-01T10:00:00Z"},
+                    {"from": "system", "sender_name": "APFS", "message": "Sure, how can I assist you?", "timestamp": "2023-06-01T10:00:05Z"},
+                    {"from": "user", "sender_name": "Carrol Shelby", "message": "I want to know about the offer.", "timestamp": "2023-06-01T10:00:10Z"},
+                    {"from": "user", "sender_name": "Carrol Shelby", "message": "I want to know about the offer.", "timestamp": "2023-06-01T10:00:10Z"},
                 ],
             },
             "9876543210": {
-                "profile_picture": "/static/images/user2.png",
+                "profile_picture":"/avatar2.png",
                 "user_last_message": "Not interested.",
                 "user_completed_flow": False,
                 "user_cutoff_step": "Step 3",
@@ -247,7 +502,6 @@ class UserDetailsResource:
         resp.status = falcon.HTTP_200
         resp.media = user_details[id]
         return
-
 
 
 class AnalyticsAPI:
@@ -337,13 +591,52 @@ class AnalyticsAPI:
         resp.status = falcon.HTTP_200
 
     def on_get_remainders(self, req, resp):
-        # Reminders analytics
-        resp.media = {
-            "total_reminders_sent": 200,
-            "completion_rate": "75%",
-            "retry_analysis": {"successful_retries": 20, "failed_retries": 5},
-            "missed_reminders": 10,
-        }
+        remainders = [
+            {
+                "id": 1,
+                "name": "January EMI Remainder",
+                "description": "EMI Payments Remainder for January 2024",
+                "start_date": "2024-10-15",
+                "repeat_attempts": 3,
+                "connect_flow": "Upsell Loan Flow",
+                "users_reached": 689,
+                "status": "Active",
+            },
+            {
+                "id": 2,
+                "name": "February EMI Remainder",
+                "description": "Interest Rate starting at just 9%",
+                "start_date": "2024-12-31",
+                "repeat_attempts": 3,
+                "connect_flow": "Good Customer Reward Program",
+                "users_reached": 785,
+                "end_date": "2025-01-05",
+                "status": "Scheduled",
+            },
+            {
+                "id": 3,
+                "name": "Loan Completion Kudos",
+                "description": "Congratulating customer and offer Topup Loans",
+                "start_date": "2024-06-01",
+                "repeat_attempts": 2,
+                "connect_flow": "Top Up flow",
+                "users_reached": 777,
+                "end_date": "2024-06-10",
+                "status": "Completed",
+            },
+        ]
+
+        # Send response
+        resp.media  = remainders
+        resp.status = falcon.HTTP_200
+
+        # resp.media = {
+        #     "total_reminders_sent": 200,
+        #     "completion_rate": "75%",
+        #     "retry_analysis": {"successful_retries": 20, "failed_retries": 5},
+        #     "missed_reminders": 10,
+        # }
+
 
     def on_get_user_stats(self, req, resp):
         # User-level analytics
@@ -493,17 +786,43 @@ class AnalyticsAPI:
         }
 
 
+# Define the upload directory
+UPLOAD_DIR = "upload"  # Adjust to your desired directory
+
+# Ensure the upload directory exists
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+import mimetypes
+from uuid import uuid4
+
+class FileUploadResource:
+    def on_post(self, req, resp):
+        try:
+
+            print(">>>>", req.headers)
+            uploaded_file = req.bounded_stream.read()
+            ext = mimetypes.guess_extension(req.content_type)
+            filename = req.get_header("X-File-Name", default=f"{uuid4()}{ext}")
+            filepath = os.path.join(UPLOAD_DIR, filename)
+
+            with open(filepath, "wb") as f:
+                f.write(uploaded_file)
+
+            send_success(resp, data={"file": filename})
+
+        except Exception as e:
+            send_error(resp, "failed to upload file", excp=e)
+
+
 app = falcon.App(middleware=[MultipartMiddleware()])
+app.req_options.auto_parse_form_urlencoded=True
 analytics = AnalyticsAPI()
 flow_resource = FlowResource()
 
 
 # Add routes
 app.add_route('/whatsapp', WhatsAppWebhook())
-app.add_route("/apfsconnect/api/analytics/flows/{id}", flow_resource)
 app.add_route("/apfsconnect/api/analytics/test", analytics, suffix="test")
 app.add_route("/apfsconnect/api/analytics/overview", analytics, suffix="overview")
-app.add_route("/apfsconnect/api/analytics/remainders", analytics, suffix="remainders")
 app.add_route("/apfsconnect/api/analytics/user-stats", analytics, suffix="user_stats")
 app.add_route("/apfsconnect/api/analytics/content-performance", analytics, suffix="content_performance")
 app.add_route("/apfsconnect/api/analytics/time-based", analytics, suffix="time_based")
@@ -512,13 +831,85 @@ app.add_route("/apfsconnect/api/analytics/team-productivity", analytics, suffix=
 app.add_route("/apfsconnect/api/analytics/flow-stats", analytics, suffix="flow_stats")
 app.add_route("/apfsconnect/api/analytics/summary", analytics, suffix="summary")
 
-app.add_route("/apfsconnect/api/analytics/promotions", analytics, suffix="promotions")
-app.add_route("/apfsconnect/api/analytics/promotions/{id}", PromotionDetailsResource())
-app.add_route("/apfsconnect/api/analytics/promotions/{id}/users", PromotionUsersResource())
-app.add_route("/apfsconnect/api/analytics/users/{id}", UserDetailsResource())
+# app.add_route("/apfsconnect/api/analytics/promotions", analytics, suffix="promotions")
+# app.add_route("/apfsconnect/api/analytics/promotions/{id}/users", PromotionUsersResource())
+# app.add_route("/apfsconnect/api/analytics/promotions/{id}", PromotionDetailsResource())
+# app.add_route("/apfsconnect/api/analytics/users/{id}", PromotionUserDetailsResource())
+
+app.add_route("/apfsconnect/api/analytics/remainders", analytics, suffix="remainders")
+app.add_route("/apfsconnect/api/analytics/remainders/{id}/users", RemaindersUsersResource())
+app.add_route("/apfsconnect/api/analytics/remainders/{id}", RemaindersDetailsResource())
+app.add_route("/apfsconnect/api/analytics/remainders/users/{id}", RemaindersUserDetailsResource())
+
+# # app.add_route("/apfsconnect/api/analytics/flows/{id}", flow_resource)
+# app.add_route("/apfsconnect/api/flows", flow_resource)  # POST, GET (all)
+# app.add_route("/apfsconnect/api/flows/{flow_id}", flow_resource) # PATCH, DELETE, GET (single)
+
+# from api_resources.promotions import PromotionResource
+# app.add_route("/promotions", PromotionResource())
+# app.add_route("/promotions/{promotion_id}", PromotionResource())
+
+
+# class CORSMiddleware:
+#     def process_request(self, req, resp):
+#         # Add headers for preflight and actual requests
+#         resp.set_header("Access-Control-Allow-Origin", "*")
+#         resp.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+#         resp.set_header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization, X-Requested-With X-File-Name")
+
+#         # Allow browsers to cache the preflight response
+#         if req.method == "OPTIONS":
+#             resp.status = falcon.HTTP_200
+#             return
+        
+
+import falcon
+from api_resources.promotions import PromotionResource
+from api_resources.flows import FlowResource
+from api_resources.campaigns import CampaignResource
+from api_resources.remainders import RemainderResource
+from api_resources.users import UserResource
+from utils.logger import LogManager
+
+app = falcon.App(middleware=[MultipartMiddleware()])
+
+app.req_options.media_handlers.update({
+    "application/json": falcon.media.JSONHandler(),
+})
 
 log_manager = LogManager()
 logger = log_manager.get_logger("server")
+
+# Promotions endpoints
+promotions = PromotionResource(logger)
+app.add_route("/apfsconnect/api/promotions", promotions)          # For POST and GET all
+app.add_route("/apfsconnect/api/promotions/{id}", promotions)     # For GET, PATCH, DELETE by ID
+app.add_route("/apfsconnect/api/promotions/{id}/campaigns", promotions)
+
+# Flows endpoints
+flows = FlowResource(logger)
+app.add_route("/apfsconnect/api/flows", flows)                    # For POST and GET all
+app.add_route("/apfsconnect/api/flows/{id}", flows)               # For GET, PATCH, DELETE by ID
+
+# Campaigns endpoints
+campaigns = CampaignResource(logger)
+app.add_route("/apfsconnect/api/campaigns", campaigns)            # For POST and GET all
+app.add_route("/apfsconnect/api/campaigns/{id}", campaigns)       # For GET, PATCH, DELETE by ID
+app.add_route("/apfsconnect/api/campaigns/{id}/metrics", campaigns)
+
+# Remainders endpoints
+remainders = RemainderResource(logger)
+app.add_route("/apfsconnect/api/remainders", remainders)            # For POST and GET all
+app.add_route("/apfsconnect/api/remainders/{id}", remainders)       # For GET, PATCH, DELETE by ID
+
+# Remainders endpoints
+users = UserResource(logger)
+app.add_route("/apfsconnect/api/users", users)            # For POST and GET all
+app.add_route("/apfsconnect/api/users/{id}", users) 
+
+file_upload_resource = FileUploadResource()
+app.add_route("/apfsconnect/api/upload", file_upload_resource)
+
 
 if __name__ == "__main__":
     from wsgiref.simple_server import make_server
