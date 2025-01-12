@@ -7,6 +7,7 @@ const Sidebar = () => {
     // { label: "Summary", path: "/summary" },
     { label: "Promotions", path: "/promotions" },
     { label: "Reminders", path: "/remainders" },
+    { label: "Campaigns", path: "/campaigns" },
     // { label: "User Stats", path: "/user-stats" },
     // { label: "Flow Stats", path: "/flow-stats" },
     // { label: "Time-Based Insights", path: "/time-based" },

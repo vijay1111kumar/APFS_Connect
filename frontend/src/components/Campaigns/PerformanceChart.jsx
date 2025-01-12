@@ -1,0 +1,111 @@
+import React, { useState, useEffect } from "react";
+import ColumnChart from "./ColumnChart";
+
+const PerformanceChart = ({ fetchCampaignsPerformance }) => {
+  const [selectedId, setSelectedId] = useState(null); // Selected promotion ID
+  const [timePeriod, setTimePeriod] = useState("7days"); // Default timeframe
+  const [allData, setAllData] = useState(null); // Data for all campaigns
+  const [chartData, setChartData] = useState(null); // Data for the current view
+  const [records, setRecords] = useState([]); // Records list to populate the dropdown
+
+  // Helper function to slice data for selected timeframe
+  const filterByTimePeriod = (data, period) => {
+    const days = period === "today" ? 1 : period === "3days" ? 3 : period === "7days" ? 7 : 30;
+    return data.slice(0, days);
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchCampaignsPerformance();
+        setAllData(data);
+        
+        const dropdownRecords = Object.entries(data).map(([id, promotion]) => ({
+          id,
+          name: promotion.name,
+        }));
+        setRecords(dropdownRecords);
+        setChartData(formatChartData(data, timePeriod));
+
+      } catch (error) {
+        console.error("Error fetching performance data:", error);
+      }
+    };
+
+    fetchData();
+  }, [fetchCampaignsPerformance]);
+
+  useEffect(() => {
+    if (allData) {
+      // Update the chart data when timeframe or selected promotion changes
+      const filteredData = selectedId
+        ? { [selectedId]: allData[selectedId] }
+        : allData; // Filter for the selected promotion or show all
+      setChartData(formatChartData(filteredData, timePeriod));
+    }
+  }, [selectedId, timePeriod, allData]);
+
+  const formatChartData = (data, period) => {
+    const categories = Array.from(
+      new Set(
+        Object.values(data).flatMap((campaign) =>
+          filterByTimePeriod(campaign.values, period).map((item) => item.date)
+        )
+      )
+    ); // Extract unique dates across campaigns
+
+    const series = Object.entries(data).map(([campaignId, campaign]) => ({
+      name: campaign.name,
+      data: filterByTimePeriod(campaign.values, period).map((item) => item.value),
+    }));
+
+    return { categories, series };
+  };
+
+  return (
+    <div className="p-4 bg-white rounded border border-gray-200">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold">Performance Chart</h3>
+
+      <div className="chartControls flex gap-4">
+        <select
+          className="rounded border-gray-300 px-3 py-2 text-sm"
+          value={timePeriod}
+          onChange={(e) => setTimePeriod(e.target.value)}
+        >
+          <option value="today">Today</option>
+          <option value="3days">Last 3 Days</option>
+          <option value="7days">Last 7 Days</option>
+          <option value="30days">Last Month</option>
+        </select>
+
+        <select
+          className="rounded border-gray-300 px-3 py-2 text-sm"
+          value={selectedId || ""}
+          onChange={(e) => setSelectedId(e.target.value || null)} // Reset to all campaigns if no ID selected
+        >
+          <option value="">All Campaigns</option>
+          {records.map((record) => (
+            <option key={record.id} value={record.id}>
+              {record.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      </div>
+      <div className="flex items-center justify-between mb-4">
+      </div>
+      {chartData && (
+        <ColumnChart
+          data={chartData}
+          title={selectedId ? `Performance for ${records.find((rec) => rec.id === selectedId)?.name}` : "All Campaigns"}
+          subtitle={`Time Period: ${timePeriod}`}
+        />
+      )}
+
+    </div>
+  );
+};
+
+export default PerformanceChart;
