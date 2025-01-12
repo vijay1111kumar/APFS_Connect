@@ -4,6 +4,7 @@ import sys
 import yaml
 import logging
 
+from datetime import datetime
 from typing import Dict, Any, List
 from sqlalchemy import Enum
 from sqlalchemy.inspection import inspect
@@ -12,9 +13,9 @@ sys.path.append("../")
 from setup import global_registry, temp_registry
 
 logger = logging.getLogger("validators")
-DATASET_DIR = "datasets"
-PROCESSORS_DIR = "processors"
-SCHEMA_DIR = "schema"
+DATASET_DIR = "./datasets"
+PROCESSORS_DIR = "../processors"
+SCHEMA_DIR = "../schema"
 
 TYPE_MAPPING = {
     "str": str,
@@ -251,6 +252,7 @@ class SchemaValidator:
         except yaml.YAMLError as e:
             raise Exception(f"Error loading schema file '{schema_name}': {e}")
 
+
     def validate(self, data: Dict[str, Any], schema: Dict[str, Any], model=None) -> Dict[str, Any]:
         errors = {}
         validated_data = data
@@ -265,14 +267,23 @@ class SchemaValidator:
 
             # Validate data type
             expected_type = rules.get("type")
-            if value is not None and not isinstance(value, self._get_type(expected_type)):
-                errors[field] = f"Expected type '{expected_type}', got '{type(value).__name__}'"
-                continue
+            if expected_type == "datetime":
+                try:
+                    value = datetime.strptime(value, rules.get("format", "%Y-%m-%d %H:%M:%S")) if value else None
+                    validated_data[field] = value
+                except ValueError:
+                    errors[field] = f"Invalid datetime format for '{field}'. Expected format: {rules.get('format', '%Y-%m-%d %H:%M:%S')}"
+                    continue
+            
+            if value is not None:
+                if not isinstance(value, self._get_type(expected_type)):
+                    errors[field] = f"Expected type '{expected_type}', got '{type(value).__name__}'"
+                    continue
 
             # Validate allowed characters
             allowed_chars = rules.get("allowed_chars")
             if allowed_chars and not self._validate_chars(value, allowed_chars):
-                errors[field] = f"Invalid characters for '{allowed_chars}'"
+                errors[field] = f"Invalid characters for '{field}'. Allowed: {allowed_chars}"
                 continue
 
             # Validate enum values
@@ -282,13 +293,20 @@ class SchemaValidator:
                     if value not in enum_values:
                         errors[field] = f"Invalid value '{value}', allowed: {enum_values}"
                         continue
+
                     validated_data[field] = value
                 except ValueError as e:
                     errors[field] = str(e)
                     continue
 
+            # Add the validated value to validated_data
+            if field not in validated_data:
+                validated_data[field] = value
+
         if errors:
             raise ValueError(f"Validation errors: {errors}")
+
+        print("Validated data >>>", validated_data)
 
         return validated_data
 
@@ -299,6 +317,7 @@ class SchemaValidator:
             "bool": bool,
             "float": float,
             "enum": str,
+            "datetime": datetime
         }
         return type_mapping.get(type_name)
 
@@ -328,9 +347,18 @@ class SchemaValidator:
 
             # Validate data type
             expected_type = rules.get("type")
-            if value is not None and not isinstance(value, self._get_type(expected_type)):
-                errors[field] = f"Expected type '{expected_type}', got '{type(value).__name__}'"
-                continue
+            if expected_type == "datetime":
+                try:
+                    value = datetime.strptime(value, rules.get("format", "%Y-%m-%d %H:%M:%S")) if value else None
+                    validated_data[field] = value
+                except ValueError:
+                    errors[field] = f"Invalid datetime format for '{field}'. Expected format: {rules.get('format', '%Y-%m-%d %H:%M:%S')}"
+                    continue
+            
+            if value is not None:
+                if not isinstance(value, self._get_type(expected_type)):
+                    errors[field] = f"Expected type '{expected_type}', got '{type(value).__name__}'"
+                    continue
 
             # Validate allowed characters
             allowed_chars = rules.get("allowed_chars")
