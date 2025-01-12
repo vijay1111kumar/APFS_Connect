@@ -1,7 +1,7 @@
 
 import sys
 import time
-sys.path.append("../APFS_Connect")
+sys.path.append("../")
 
 from batch_processor.batch_processor import BatchProcessor
 from batch_processor.scheduler import ReminderScheduler
