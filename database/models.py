@@ -1,5 +1,5 @@
-import enum
 import datetime
+import enum
 
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy import  Column, String, Integer, Boolean, Text, ForeignKey, Enum, DateTime, Interval
@@ -15,6 +15,11 @@ class MessageType(enum.Enum):
 class ActivityType(enum.Enum):
     PROMOTION = "Promotion"
     REMAINDER = "Remainder"
+
+class IntervalUnit(enum.Enum):
+    MINUTES = "MINUTES"
+    HOURS = "HOURS"
+    DAYS = "DAYS"
 
 class User(Base, SerializerMixin):
     __tablename__ = "users"
@@ -96,6 +101,11 @@ class Campaign(Base, SerializerMixin):
     last_run_time = Column(DateTime)
     last_run_by = Column(String, ForeignKey("users.id"))
     total_runs = Column(Integer, default=0)
+    repeat_count = Column(Integer, default=0)
+    repeat_interval_value = Column(Integer, nullable=True) 
+    repeat_interval_unit = Column(Enum(IntervalUnit), nullable=True)
+    customer_excel_file = Column(String, nullable=True)
+
 
 class CampaignMetrics(Base, SerializerMixin):
     __tablename__ = "campaign_metrics"
