@@ -1,7 +1,7 @@
 import re
 import sys
 from typing import List, Dict
-sys.path.append("../")
+# sys.path.append("../")
 
 from setup import global_registry
 from utils.logger import LogManager

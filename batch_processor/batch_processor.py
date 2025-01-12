@@ -1,12 +1,10 @@
 import os
-import sys
 import shutil
 
 from batch_processor.uploader import Uploader
 from batch_processor.promotion import Promotions
 from batch_processor.remainder import Reminders
 from batch_processor.publisher import Publish
-from batch_processor.scheduler import ReminderScheduler
 from utils.logger import LogManager
 
 log_manager = LogManager()
@@ -16,8 +14,7 @@ class BatchProcessor:
     def __init__(self):
         self.uploader = Uploader()
         self.promotions = Promotions()
-        self.scheduler = ReminderScheduler()
-        self.reminders = Reminders(self.scheduler)
+        self.reminders = Reminders()
         self.publish = Publish()
 
     def process_batch(self, action: str, file_path: str):
@@ -25,7 +22,7 @@ class BatchProcessor:
         if action == "promotions":
             flow_id = os.path.splitext(os.path.basename(file_path))[0]
             self.promotions.process_promotional_flow(flow_id, data)
-            self.archive_file(file_path)
+            # self.archive_file(file_path)
         if action == "remainder":
             self.reminders.process_reminders(file_path, data, global_retry_attempts=3, global_retry_interval=10)
 
