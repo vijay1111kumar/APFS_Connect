@@ -8,6 +8,8 @@ import SummaryPage from "./pages/SummaryPage";
 import TestPage from "./pages/TestPage";
 import UserDetailsPage from "./pages/UserDetailsPage";
 
+import CampaignsPage from "./pages/CampaignsPage";
+
 import PromotionsPage from "./pages/PromotionsPage";
 import PromotionsDetailsPage from "./pages/PromotionsDetailsPage";
 import PromotionUserDetailsPage from "./pages/PromotionUserDetailsPage";
@@ -22,6 +24,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/promotions" element={<PromotionsPage />} />
+        <Route path="/campaigns" element={<CampaignsPage />} />
         <Route path="/remainders" element={<RemaindersPage />} />
         {/* <Route path="/flow-stats" element={<FlowStatsPage />} /> */}
         {/* <Route path="/time-based" element={<TimeBasedPage />} />; */}

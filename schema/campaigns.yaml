@@ -8,7 +8,7 @@ is_active:
   type: bool
   mandatory: false
 schedule_at:
-  type: datetime
+  type: str
   mandatory: true
 activity_type:
   type: enum
@@ -29,11 +29,23 @@ modified_at:
   type: datetime
   mandatory: false
 last_run_time:
-  type: datetime
+  type: str
   mandatory: false
 last_run_by:
   type: str
   mandatory: false
 total_runs:
   type: int
+  mandatory: false
+repeat_count:
+  type: int
+  mandatory: false
+repeat_interval_value:
+  type: int
+  mandatory: false
+repeat_interval_unit:
+  type: enum
+  mandatory: false
+customer_excel_file:
+  type: str
   mandatory: false
