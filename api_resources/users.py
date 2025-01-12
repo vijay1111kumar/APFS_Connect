@@ -11,6 +11,7 @@ from utils.validators import SchemaValidator
 
 class UserResource(BaseResource):
     def __init__(self, logger):
+        self.model = User
         self.validator = SchemaValidator()
         self.schema = self.validator.load_schema("users") 
         super().__init__(user_repo, "Users", logger)
@@ -27,7 +28,7 @@ class UserResource(BaseResource):
         with handle_request(self.logger, resp):
             with get_db() as db:
                 req_body = req.media
-                validated_data = self.validator.validate(req_body, self.schema, User)
+                validated_data = self.validator.validate(req_body, self.schema, self.model)
                 result = self.handle_post(db, validated_data)
                 send_success(resp, data=result)
 
@@ -42,7 +43,7 @@ class UserResource(BaseResource):
                 if restricted:
                     return send_error(resp, f"Cannot patch restricted fields: {', '.join(restricted)}", HTTP_400)
                 
-                validated_data = self.validator.validate_partial(req_body, self.schema, User)
+                validated_data = self.validator.validate_partial(req_body, self.schema, self.model)
                 result, error = self.handle_patch(db, id, validated_data)
                 if error:
                     return send_error(resp, error, HTTP_404)
