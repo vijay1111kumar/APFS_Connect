@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import ApexCharts from "react-apexcharts";
 import Card from "../Common/Card";
 
@@ -6,47 +6,44 @@ import Card from "../Common/Card";
 const formatLabel = (label) =>
   label.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
-const RadialChart = ({ title, data }) => {
-  const total = data.total || 1;
+const RadialChart = ({ title, aggregatedData, campaignStats }) => {
+  const [hoveredCampaignIndex, setHoveredCampaignIndex] = useState(null);
 
-  // Prepare filtered data and calculate percentages
-  const filteredData = Object.entries(data)
-    .filter(([key]) => key !== "total")
-    .map(([key, value]) => ({
-      label: formatLabel(key), // Replace underscores and format to title case
-      value,
-      percentage_value: ((value / total) * 100).toFixed(2), // Calculate percentage
-    }));
+  // Prepare data for radial chart series and labels
+  const chartLabels = campaignStats.map((campaign) => campaign.name);
+  const chartSeries = campaignStats.map((campaign) =>
+    (campaign.stats.messages_delivered/campaign.stats.messages_attempted || 1).toFixed(2) * 100 
+  );
 
-  // Extract chart series (angles) and labels
-  const chartSeries = filteredData.map((item) => Number(item.percentage_value));
-  const chartLabels = filteredData.map((item) => item.label);
-
-  // Updated color palette
-  const colorPalette = ["#d9dd92", "#eabe7c", "#dd6031", "#311e10"];
-
-  // Chart options
+  const colorPalette = ["#d9dd92", "#eabe7c", "#dd6031", "#311e10", "#a9b665", "#5c6370"];
   const chartOptions = {
     series: chartSeries,
-    colors: colorPalette.slice(0, chartSeries.length), // Use colors dynamically based on the number of series
+    colors: colorPalette.slice(0, chartSeries.length), // Use colors dynamically
     chart: {
-      height: 380, // Larger radial circles
+      height: 380,
       type: "radialBar",
-      sparkline: { enabled: true },
+      events: {
+        dataPointMouseEnter: (event, chartContext, config) => {
+          setHoveredCampaignIndex(config.dataPointIndex);
+        },
+        dataPointMouseLeave: () => {
+          setHoveredCampaignIndex(null); // Reset to aggregated stats
+        },
+      },
     },
     plotOptions: {
       radialBar: {
-        track: { background: "#E5E7EB", margin: 5 }, // Add spacing between segments
+        track: { background: "#E5E7EB", margin: 5 },
         dataLabels: {
           name: { show: false },
           value: {
-            formatter: (val) => `${val}%`, // Display percentage in center
-            offsetY: 5, // Adjust position to avoid overlap
+            formatter: (val) => `${val}%`,
+            offsetY: 5,
           },
         },
         hollow: {
           margin: 0,
-          size: "40%", // Bigger hollow size to ensure clear spacing
+          size: "40%",
         },
         stroke: {
           lineCap: "round",
@@ -59,38 +56,42 @@ const RadialChart = ({ title, data }) => {
       position: "bottom",
       horizontalAlign: "center",
       fontFamily: "Inter, sans-serif",
-      itemMargin: { horizontal: 10, vertical: 5 }, // Add spacing between legend items
+      itemMargin: { horizontal: 10, vertical: 5 },
     },
     tooltip: { enabled: true },
   };
 
+  const dataToDisplay =
+    hoveredCampaignIndex !== null
+      ? campaignStats[hoveredCampaignIndex].stats
+      : aggregatedData;
+
   return (
-        <div className="min-w-auto max-w-auto bg-white">
+    <div className="min-w-auto max-w-auto bg-white">
+      {/* Radial Chart and Cards */}
+      <div className="flex flex-col gap-4 border border-gray-200 bg-white p-4 rounded-lg">
+        
+        {/* Header */}
+        <div className="flex justify-between">
+          <h5 className="text-lg font-bold text-gray-900">{title}</h5>
+        </div>
 
-            {/* Radial Chart and Cards */}
-            <div className="flex flex-col gap-4 border border-gray-200 bg-white p-4 rounded-lg">
-                <div className="flex justify-between">
-                    <h5 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h5>
-                </div>
+        <div className="flex lg:flex-col md:flex-row justify-between gap-4 border border-gray-200 bg-white p-4 rounded-lg">
+          {/* Radial Chart */}
+          <div className="w-full h-full sm:w-1/2 md:w-full">
+            <ApexCharts options={chartOptions} series={chartSeries} type="radialBar" height={380} />
+          </div>
 
-                <div className="flex lg:flex-col md:flex-row justify-between gap-4 border border-gray-200 bg-white p-4 rounded-lg ">
-                    
-                    {/* Radial Chart */}
-                    <div className="w-full h-full sm:w-1/2 md:w-full" >
-                        <ApexCharts options={chartOptions} series={chartSeries} type="radialBar" height={380} />
-                    </div>
+          {/* Cards Section */}
+          <div className="w-full grid md:grid-cols-1 xl:grid-cols-2 gap-4 sm:grid-cols-1 sm:gap-2">
+            {Object.entries(dataToDisplay).map(([key, value]) => (
+              <Card key={key} title={formatLabel(key)} current_value={value} />
+            ))}
+          </div>
 
-                    {/* Cards Section */}
-                    <div className="w-full grid  md:grid-cols-1  xl:grid-cols-2 gap-4 sm:grid-cols-1 sm:gap-2">
-                        {filteredData.map(({ label, value }) => (
-                        <Card key={label} title={label} current_value={value} />
-                        ))}
-                    </div>
-
-                </div>
-            </div>
+        </div>
+      </div>
     </div>
-
   );
 };
 
