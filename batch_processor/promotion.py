@@ -5,7 +5,7 @@ from typing import List, Dict
 
 from setup import global_registry
 from utils.logger import LogManager
-from core.messaging import handle_content
+from core.messaging import handle_content, execute_flow
 
 log_manager = LogManager()
 logger = log_manager.get_logger("promotions")
@@ -13,6 +13,7 @@ logger = log_manager.get_logger("promotions")
 class Promotions:
     def process_promotional_flow(self, flow_id: str, data: List[Dict]):
         flow = global_registry.flows.get(flow_id)
+        print(flow)
         if not flow or not flow.get("steps"):
             logger.error(f"Flow with ID '{flow_id}' is invalid or missing steps.")
             return
@@ -23,15 +24,17 @@ class Promotions:
         for entry in data:
             user_id = entry["Phone Number"]
             try:
-                for step in flow["steps"]:
-                    content = step.get("content")
-                    if not content:
-                        continue
-                    personalized_content = self.populate_placeholders(content, entry)
-                    handle_content(personalized_content, user_id)
-                logger.info(f"Promotion sent successfully to {user_id}")
+                execute_flow(user_id, flow_id)  # Need support for personalized messages 
             except Exception as e:
-                logger.error(f"Failed to send promotion to {user_id}: {e}")
+                logger.error(f"Failed to send promotion to user:{user_id}, Error:{e}")
+
+                # for step in flow["steps"]:
+                #     content = step.get("content")
+                #     if not content:
+                #         continue
+                #     personalized_content = self.populate_placeholders(content, entry)
+                #     handle_content(personalized_content, user_id)
+                # logger.info(f"Promotion sent successfully to {user_id}")
                 
 
     def validate_placeholders(self, flow_id: str, data: List[Dict]) -> bool:
