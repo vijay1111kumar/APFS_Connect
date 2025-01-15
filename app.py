@@ -820,7 +820,6 @@ flow_resource = FlowResource()
 
 
 # Add routes
-app.add_route('/whatsapp', WhatsAppWebhook())
 app.add_route("/apfsconnect/api/analytics/test", analytics, suffix="test")
 app.add_route("/apfsconnect/api/analytics/overview", analytics, suffix="overview")
 app.add_route("/apfsconnect/api/analytics/user-stats", analytics, suffix="user_stats")
@@ -864,21 +863,24 @@ app.add_route("/apfsconnect/api/analytics/remainders/users/{id}", RemaindersUser
         
 
 import falcon
-from api_resources.promotions import PromotionResource
-from api_resources.flows import FlowResource
-from api_resources.campaigns import CampaignResource
-from api_resources.remainders import RemainderResource
-from api_resources.users import UserResource
 from utils.logger import LogManager
+from api_resources.flows import FlowResource
+from api_resources.users import UserResource
+from api_resources.campaigns import CampaignResource
+from api_resources.promotions import PromotionResource
+from api_resources.remainders import RemainderResource
+from api_resources.jobs import JobResource
+
+log_manager = LogManager()
+logger = log_manager.get_logger("server")
 
 app = falcon.App(middleware=[MultipartMiddleware()])
-
 app.req_options.media_handlers.update({
     "application/json": falcon.media.JSONHandler(),
 })
 
-log_manager = LogManager()
-logger = log_manager.get_logger("server")
+# Whatsapp Webhook
+app.add_route('/whatsapp', WhatsAppWebhook())
 
 # Promotions endpoints
 promotions = PromotionResource(logger)
@@ -899,17 +901,19 @@ app.add_route("/apfsconnect/api/campaigns/{id}/metrics", campaigns)
 
 # Remainders endpoints
 remainders = RemainderResource(logger)
-app.add_route("/apfsconnect/api/remainders", remainders)            # For POST and GET all
-app.add_route("/apfsconnect/api/remainders/{id}", remainders)       # For GET, PATCH, DELETE by ID
+app.add_route("/apfsconnect/api/remainders", remainders)          # For POST and GET all
+app.add_route("/apfsconnect/api/remainders/{id}", remainders)     # For GET, PATCH, DELETE by ID
 
 # Remainders endpoints
 users = UserResource(logger)
-app.add_route("/apfsconnect/api/users", users)            # For POST and GET all
+app.add_route("/apfsconnect/api/users", users)                     # For POST and GET all
 app.add_route("/apfsconnect/api/users/{id}", users) 
 
 file_upload_resource = FileUploadResource()
 app.add_route("/apfsconnect/api/upload", file_upload_resource)
 
+job_resource = JobResource()
+app.add_route("/apfsconnect/api/jobs", job_resource)
 
 if __name__ == "__main__":
     from wsgiref.simple_server import make_server
