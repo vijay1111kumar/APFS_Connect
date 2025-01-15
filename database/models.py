@@ -106,7 +106,17 @@ class Campaign(Base, SerializerMixin):
     repeat_interval_unit = Column(Enum(IntervalUnit), nullable=True)
     customer_excel_file = Column(String, nullable=True)
 
+    def fetch_campaign_connected_flow(self, session):
+        if self.activity_type.value == "Promotion":
+            activity = session.query(Promotion).filter(Promotion.id == self.activity_id).first()
+        elif self.activity_type.value == "Remainder":
+            activity = session.query(Remainder).filter(Remainder.id == self.activity_id).first()
+        else:
+            raise ValueError(f"Unsupported activity type: {self.activity_type.value}")
 
+        return activity.connected_flow if activity else None
+    
+    
 class CampaignMetrics(Base, SerializerMixin):
     __tablename__ = "campaign_metrics"
 
