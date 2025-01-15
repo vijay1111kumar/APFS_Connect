@@ -5,13 +5,13 @@ import importlib.util
 
 from typing import Dict, Optional, Any, List, Callable
 
-sys.path.append("../")
+# sys.path.append("../")
 from utils.logger import LogManager
 from utils.file_handler import read_json_file, update_json_file
 
 PROCESSOR_DIR = "processors"
 FLOW_DIR = "flows"
-ARCHIVE_DIR = "archive/flows"
+ARCHIVE_DIR = "../archive/flows"
 log_manager = LogManager()
 logger = log_manager.get_logger("global_registry")
 

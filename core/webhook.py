@@ -1,5 +1,5 @@
 import sys
-
+import os
 import json
 import falcon
 from typing import Dict, List
@@ -13,11 +13,25 @@ log_manager = LogManager()
 logger = log_manager.get_logger("webhook")
 
 class WhatsAppWebhook:
+    def on_get(self, req, resp):
+        VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "")
+        verify_token = req.get_param("hub.verify_token", default=None)
+        challenge = req.get_param("hub.challenge", default=None)
+
+        if verify_token == VERIFY_TOKEN:
+            logger.info("Verified webhook")
+            resp.status = falcon.HTTP_200
+            resp.text = challenge
+        else:
+            logger.error("Webhook Verification failed")
+            resp.status = falcon.HTTP_400
+            resp.text = "Invalid verification token"
+
+
     def on_post(self, req: falcon.Request, resp: falcon.Response) -> None:
         try:
             payload = self.parse_request(req)
-            self.process_payload(payload, resp)
-            resp.status = falcon.HTTP_200
+            # self.process_payload(payload, resp)
         # except PayloadValidationError as e:
         #     logger.warning(f"Validation error: {e}")
         #     resp.status = falcon.HTTP_400

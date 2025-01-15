@@ -13,9 +13,9 @@ sys.path.append("../")
 from setup import global_registry, temp_registry
 
 logger = logging.getLogger("validators")
-DATASET_DIR = "./datasets"
-PROCESSORS_DIR = "../processors"
-SCHEMA_DIR = "../schema"
+DATASET_DIR = "datasets"
+PROCESSORS_DIR = "processors"
+SCHEMA_DIR = "schema"
 
 TYPE_MAPPING = {
     "str": str,
@@ -207,7 +207,7 @@ class FlowValidator:
             errors.append(processors_validation_error)
 
         if errors:
-            logger.error(f"Flow '{flow_id}' validation failed.")
+            logger.error(f"Flow '{flow_id}' validation failed Error: {errors}.")
             return ", ".join(errors)
 
         logger.info(f"Flow '{flow_id}' validated successfully.")
