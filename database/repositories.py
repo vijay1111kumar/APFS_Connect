@@ -1,6 +1,13 @@
 from sqlalchemy.orm import Session
 from typing import Any, Dict, List
-from database.models import Promotion, Flow, Campaign, Remainder, User
+from database.models import (
+    Flow,
+    User,
+    Campaign,
+    Remainder,
+    Promotion,
+    CampaignJob
+)
 
 class Repository:
     def __init__(self, model):
@@ -42,3 +49,4 @@ flow_repo = Repository(Flow)
 campaign_repo = Repository(Campaign)
 remainder_repo = Repository(Remainder)
 user_repo = Repository(User)
+campaign_job_repo = Repository(CampaignJob)
