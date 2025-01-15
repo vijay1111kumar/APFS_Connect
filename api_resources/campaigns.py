@@ -8,18 +8,13 @@ from api_resources.base import BaseResource
 from utils.validators import SchemaValidator
 from utils.api import send_error, send_success
 from database.repositories import campaign_repo
-from batch_processor.scheduler import CampaignScheduler
+from utils.scheduler import campaign_scheduler
 from database.models import Campaign, CampaignMetrics, Promotion, Remainder
 
 activity_mapping  = {
     "Promotion":  Promotion,
     "Remainder": Remainder
 }
-
-log_manager = LogManager()
-logger = log_manager.get_logger("campaigns")
-
-campaign_scheduler = CampaignScheduler()
 
 class CampaignResource(BaseResource):
     def __init__(self, logger):
@@ -103,59 +98,43 @@ class CampaignResource(BaseResource):
                 return send_success(resp, data=result)
 
 
-    def queue_campaign_in_scheduler(self, campaign):
-        campaign_id = campaign["id"]
-        user_id = campaign["created_by"]
-        message = campaign["name"]
-        activity_type = campaign["activity_type"]
-        excel_file = campaign["customer_excel_file"]
-        run_on_save = campaign.get("run_on_save", False)
-        schedule_time = campaign.get("schedule_at")
-        retry_attempts = campaign.get("retry_attempts", 4)
-        retry_interval = campaign.get("retry_interval", 1)
+    def queue_campaign_in_scheduler(self, campaign_data: dict):
+        campaign_id = campaign_data["id"]
+        user_id = campaign_data["created_by"]
+        run_on_save = campaign_data.get("run_on_save", False)
+        schedule_time = campaign_data.get("schedule_at")
 
+        # Execute immediately
         if run_on_save:
-            # Execute immediately
-            logger.info(f"Running campaign {campaign_id} immediately.")
-            campaign_scheduler.execute_campaign(
-                campaign_id, user_id, message, activity_type, excel_file, 1, retry_attempts, retry_interval
-            )
-            if schedule_time:
-                logger.info(f"Scheduling next run for campaign {campaign_id} at {schedule_time}.")
-                campaign_scheduler.schedule_campaign(
-                    campaign_id, user_id, message, schedule_time, activity_type, excel_file, retry_attempts, retry_interval
-                )
-        elif schedule_time:
-            # Schedule campaign
-            logger.info(f"Scheduling campaign {campaign_id} at {schedule_time}.")
-            campaign_scheduler.schedule_campaign(
-                campaign_id, user_id, message, schedule_time, activity_type, excel_file, retry_attempts, retry_interval
-            )
+            self.logger.info(f"Running campaign {campaign_id} immediately.")
+            campaign_scheduler.schedule_campaign(campaign_data, user_id)
+
+        if schedule_time:
+            self.logger.info(f"Scheduling next run for campaign {campaign_id} at {schedule_time}.")
+            campaign_scheduler.schedule_campaign(campaign_data, user_id)
+
         else:
             # No scheduling needed
-            logger.info(f"Campaign {campaign_id} created without immediate or scheduled execution.")
+            self.logger.info(f"Campaign {campaign_id} created without immediate or scheduled execution.")
 
     def get_campaigns_performance(self, db, resp):
         try:
-            # Fetch the last 30 days
+            performance_data = {"Campaign": {}}
             end_date = datetime.now().date()
             start_date = end_date - timedelta(days=30)
 
             # Fetch all campaigns
             campaigns = db.query(Campaign).all()
-
             if not campaigns:
                 return send_error(resp, "No campaigns found", HTTP_404)
 
             # Collect performance data
-            performance_data = {"Campaign": {}}
 
             for campaign in campaigns[:10]:
-                # Determine the promotion or remainder associated with the campaign
                 id = campaign.id
                 name = campaign.name
                 activity_id = campaign.activity_id
-                activity_type = campaign.activity_type.value  # "PROMOTION" or "REMAINDER"
+                activity_type = campaign.activity_type.value
 
                 if activity_type not in performance_data:
                     performance_data[activity_type] = {}
