@@ -150,3 +150,14 @@ class UserConversation(Base, SerializerMixin):
     message_type = Column(Enum(MessageType), nullable=False)
     timestamp = Column(DateTime, default=datetime.datetime.now)
 
+class CampaignJob(Base, SerializerMixin):
+    __tablename__ = "campaign_jobs"
+
+    id = Column(String, primary_key=True)  # Celery Job ID
+    campaign_id = Column(String, ForeignKey("campaigns.id"), nullable=False)
+    schedule_time = Column(DateTime, nullable=False)
+    retry_interval = Column(Integer, nullable=True)
+    retry_attempts = Column(Integer, nullable=True)
+    status = Column(String, default="Scheduled")  # Scheduled, Completed, Failed, Cancelled, InProcess
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
