@@ -1,6 +1,5 @@
 import sys
 import json
-import logging
 import requests
 import subprocess
 from typing import Dict, Optional, Any
@@ -14,80 +13,89 @@ logger = log_manager.get_logger("messages")
 
 
 def execute_flow(user_id: str, flow_id: str, start_from_step: Optional[str] = None, user_response: dict = {}) -> None:
-    from setup import global_registry, temp_registry
 
-    if not (user_id and flow_id):
-        logger.error(f"Invalid flow execution request: flow='{flow_id}', user='{user_id}'")
-        return
+    try: 
+        from setup import global_registry, temp_registry
 
-    # Check for pending step
-    user_state = temp_registry.get_user_state(user_id)
-    if user_state:
-        flow_id = temp_registry.get_user_current_flow(user_id)
-        start_from_step = temp_registry.get_user_current_step(user_id).get("id", "")
-        if start_from_step:
-            logger.info(f"Resuming pending step: {start_from_step} for user '{user_id}' in flow '{flow_id}'.")
-
-    flow = global_registry.flows.get(flow_id)
-    if not flow:
-        logger.error(f"Flow with ID '{flow_id}' not found!")
-        return
-
-    if not flow.get("is_active", False):
-        logger.warning(f"Flow '{flow_id}' is inactive. Skipping execution.")
-        return
-
-    current_step_id = start_from_step or flow.get("start")
-    if not current_step_id:
-        logger.error(f"Flow '{flow_id}' does not have a start step defined!")
-        return
-
-    while current_step_id:
-        steps_visited = temp_registry.get_user_visited_steps(user_id)
-
-        if current_step_id in steps_visited:
-            logger.error(f"Cycle detected in flow '{flow_id}' at step '{current_step_id}'. Aborting execution.")
-            temp_registry.clear_user_state(user_id)
+        if not (user_id and flow_id):
+            logger.error(f"Invalid flow execution request: flow='{flow_id}', user='{user_id}'")
             return
 
-        temp_registry.update_visited_steps_for_user(user_id, current_step_id)
+        # Check for pending step
+        user_state = temp_registry.get_user_state(user_id)
+        # if user_state and user_state.get("pending_step"):
+        #     flow_id = temp_registry.get_user_current_flow(user_id)
+        #     start_from_step = temp_registry.get_user_current_step(user_id)
+        #     if start_from_step:
+        #         logger.info(f"Resuming pending step: {start_from_step} for user '{user_id}' in flow '{flow_id}'.")
 
-        current_step = global_registry.get_step_by_id(flow_id, current_step_id)
-        if not current_step or not current_step.get("is_active", False):
-            logger.error(f"Step '{current_step_id}' is invalid or inactive. Skipping.")
-            break
-
-        logger.info(f"Executing step '{current_step_id}' in flow '{flow_id}' for user '{user_id}'.")
-
-        next_step_id = execute_step(flow_id, current_step, user_id, user_response)
-
-        if next_step_id == "wait":
+        flow = global_registry.flows.get(flow_id, {})
+        if not flow:
+            logger.error(f"Flow with ID '{flow_id}' not found!")
             return
 
-        if not next_step_id :
-            next_flow_id = flow.get("next_flow")
-            if next_flow_id:
-                logger.info(f"Flow '{flow_id}' completed. Loading next flow '{next_flow_id}' for user '{user_id}'.")
-                temp_registry.handle_user_flow_completion(user_id, next_flow_id)
-                execute_flow(user_id, next_flow_id)
-            else:
-                logger.info(f"Flow '{flow_id}' completed for user '{user_id}'. Clearing state.")
+        if not flow.get("is_active", False):
+            logger.warning(f"Flow '{flow_id}' is inactive. Skipping execution.")
+            return
+
+        current_step_id = start_from_step.get("id") or flow.get("start")
+        if not current_step_id:
+            logger.error(f"Flow '{flow_id}' does not have a start step defined!")
+            return
+
+        while current_step_id:
+
+            steps_visited = temp_registry.get_user_visited_steps(user_id)
+            if current_step_id in steps_visited:
+                logger.error(f"Cycle detected in flow '{flow_id}' at step '{current_step_id}'. Aborting execution.")
                 temp_registry.clear_user_state(user_id)
-            break
+                return
 
-        temp_registry.update_user_step(user_id, next_step_id)
-        current_step_id = next_step_id
+            # Retrieve the step from temp_registry if available
+            user_state = temp_registry.get_user_state(user_id)
+            current_step = user_state.get("current_step") if user_state else ""
+            # current_step = flow.get(user_state_current_step_id, {})
+            if not current_step:
+                current_step = global_registry.get_step_by_id(flow_id, current_step_id)
+
+            if not current_step or not current_step.get("is_active", False):
+                logger.error(f"Step '{current_step_id}' is invalid or inactive. Skipping.")
+                break
+
+            logger.info(f"Executing step '{current_step_id}' in flow '{flow_id}' for user '{user_id}'.")
+
+            next_step_id = execute_step(flow_id, current_step, user_id, user_response)
+            if next_step_id == "wait":
+                return
+
+            if not next_step_id:
+                next_flow_id = flow.get("next_flow")
+                if next_flow_id:
+                    logger.info(f"Flow '{flow_id}' completed. Loading next flow '{next_flow_id}' for user '{user_id}'.")
+                    temp_registry.handle_user_flow_completion(user_id, next_flow_id)
+                    execute_flow(user_id, next_flow_id)
+                else:
+                    logger.info(f"Flow '{flow_id}' completed for user '{user_id}'. Clearing state.")
+                    temp_registry.clear_user_state(user_id)
+                break
 
 
-def execute_step(flow_id: str, step: Dict, user_id: str, user_response: dict = {}) -> Optional[str]:
+            next_step = flow.get(next_step_id, {})
+            temp_registry.update_user_step(user_id, next_step)
+            temp_registry.update_visited_steps_for_user(user_id, current_step_id)
+            current_step_id = next_step_id
+
+    except Exception as e:
+        logger.error(f"Faield to execute flow Error: {e}")
+
+
+def execute_step(flow_id: str, step: dict, user_id: str, user_response: dict = {}) -> Optional[str]:
     from setup import temp_registry
 
     try:
-
         processor_index = 0
         user_state = temp_registry.get_user_state(user_id)
-        user_has_pending_step = temp_registry.user_has_pending_step(user_id)   
-
+        user_has_pending_step = temp_registry.user_has_pending_step(user_id)
         if user_state and user_state.get("id", "") == step["id"]:
             processor_index = user_state.get("processor_index", 0)
 
@@ -104,7 +112,7 @@ def execute_step(flow_id: str, step: Dict, user_id: str, user_response: dict = {
         # Main Processors
         processors = step.get("processor", [])
         for idx, processor in enumerate(processors[processor_index:], start=processor_index):
-            if processor.get("wait", False):
+            if processor["wait"]:
                 # Save the current state and return "wait" to stop execution
                 logger.info(f"Step '{step['id']}' paused for user '{user_id}' at processor index {idx}.")
                 temp_registry.update_user_step_as_pending(user_id, flow_id, step, processor_index=idx)
@@ -135,6 +143,7 @@ def execute_step(flow_id: str, step: Dict, user_id: str, user_response: dict = {
         return None
 
 
+
 def handle_content(content: Dict, user_id: str) -> None:
 
     if not (content and user_id):
@@ -154,7 +163,7 @@ def handle_content(content: Dict, user_id: str) -> None:
         send_interactive_message(user_id, content["body"])
 
     else:
-        logging.warning(f"Unsupported content type: {content_type}")
+        logger.warning(f"Unsupported content type: {content_type}")
 
 
 def send_text_message(phone_number: str, text: str) -> None:
@@ -198,7 +207,7 @@ def send_message(payload: Dict) -> None:
         )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        logging.error(f"Failed to send message: {e}")
+        logger.error(f"Failed to send message: {e}")
 
 def run_processor(
     flow_id: str, processor_data: Dict, user_id: str, user_response: Optional[Dict] = None
@@ -221,10 +230,11 @@ def run_processor(
             logger.info(f"Executing processor:{processor_name} as script'")
             execute_processor_script(processor_executor, payload)
 
-        flow_processor_mapping = global_registry.flow_processors.get(flow_id)
+        flow_processor_mapping = json.loads(global_registry.flow_processors.get(flow_id))
         processor_executor = flow_processor_mapping.get(processor_name)
         if not processor_executor:
-            processor_executor = global_registry.processors.get(processor_name)
+            processor_executor = global_registry.get_processor_by_name(processor_name)
+            # processor_executor = global_registry.processors.get(processor_name)
 
         if not processor_executor:
             logger.warning(f"Processor '{processor_name}' not found!")
