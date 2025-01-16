@@ -1,7 +1,6 @@
 
 import sys
 import requests
-sys.path.append("../")
 
 from core.messaging import send_text_message, send_media_message
 
@@ -40,6 +39,17 @@ bikes_inventory = {
 }
 
 data_store = {}
+
+def process_test_ride(payload):
+    bike_id = payload.get("id")
+    user_id = payload.get("user_id")
+    customer_want_test_ride = payload.get("value", "")
+
+    if customer_want_test_ride:
+        send_text_message(user_id, "Get ready for a Test Ride. 🚀")
+        return
+    
+    send_text_message(user_id, "Sorry to see you go 🥺")
 
 def process_bike_selection(payload):
     bike_id = payload.get("id")
