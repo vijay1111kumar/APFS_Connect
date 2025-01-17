@@ -31,7 +31,7 @@ class WhatsAppWebhook:
     def on_post(self, req: falcon.Request, resp: falcon.Response) -> None:
         try:
             payload = self.parse_request(req)
-            # self.process_payload(payload, resp)
+            self.process_payload(payload, resp)
         # except PayloadValidationError as e:
         #     logger.warning(f"Validation error: {e}")
         #     resp.status = falcon.HTTP_400
@@ -59,7 +59,7 @@ class WhatsAppWebhook:
         message = messages[0]
         user_id = message.get("from", "")
         message_type = message.get("type", "")
-        print(message)
+
         logger.info(f"Incoming message from user: {user_id}, type: {message_type} message >> {message.get(message_type, '')}")
         self.handle_message(user_id, message, resp)
 
@@ -88,14 +88,15 @@ class WhatsAppWebhook:
             resp.media = {"message": "Unsupported message type."}
 
     def handle_text_message(self, user_id: str, message: Dict, resp: falcon.Response) -> None:
+
         text = message.get("text", {}).get("body", "")
         fresh_flow = global_registry.get_flow_by_trigger(text)
-
-        resume_from_step = temp_registry.get_user_current_step(user_id).get("id", "")
+        resume_from_step = temp_registry.get_user_current_step(user_id)
         flow_id = temp_registry.get_user_current_flow(user_id)
         
         if fresh_flow:
             flow_id = fresh_flow["id"]
+            temp_registry.clear_user_state(user_id)
             logger.info(f"Triggering flow: {flow_id} for user: {user_id}")
 
         if not flow_id:
@@ -124,10 +125,11 @@ class WhatsAppWebhook:
         reply_title = interactive.get(interactive_type, {}).get("title", "")
 
         fresh_flow = global_registry.get_flow_by_trigger(reply_id)
-        resume_from_step = temp_registry.get_user_current_step(user_id).get("id", "")
+        resume_from_step = temp_registry.get_user_current_step(user_id)
         flow_id = temp_registry.get_user_current_flow(user_id)
         
         if fresh_flow:
+            temp_registry.clear_user_state(user_id)
             flow_id = fresh_flow["id"]
             logger.info(f"Triggering flow: {flow_id} for user: {user_id}")
 

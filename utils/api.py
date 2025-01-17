@@ -13,7 +13,7 @@ MODE = os.getenv("MODE")
 def send_success(resp, message:str = "", data=None, status: status_codes=HTTP_200):
     response_body = {"status": "success"}
     if message:
-        response_body[message] = message
+        response_body["message"] = message
 
     if data is not None:
         response_body["data"] = data
