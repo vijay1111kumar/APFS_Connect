@@ -3,7 +3,7 @@ import React from "react";
 const Modal = ({ header, onClose, children }) => {
   return (
     <div className="fixed inset-0 -space-y-6 z-50 flex items-center justify-center bg-gray-900 bg-opacity-70">
-      <div className="bg-white rounded p-8 sm-p-6 shadow-lg w-8/12">
+      <div className="bg-white rounded p-8 sm-p-6 shadow-lg w-8/12 sm:w-10/12">
         <div className="flex justify-between">
 
           <div>
