@@ -18,6 +18,8 @@ import RemaindersPage from "./pages/RemaindersPage";
 import RemaindersUserDetailsPage from "./pages/RemaindersUserDetailsPage";
 import RemaindersDetailsPage from "./pages/RemaindersDetailsPage";
 
+import FlowsPage from "./pages/FlowsPage"
+
 const App = () => {
   return (
     <Router>
@@ -25,6 +27,7 @@ const App = () => {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/campaigns" element={<CampaignsPage />} />
+        <Route path="/flows" element={<FlowsPage />} />
         <Route path="/remainders" element={<RemaindersPage />} />
         {/* <Route path="/flow-stats" element={<FlowStatsPage />} /> */}
         {/* <Route path="/time-based" element={<TimeBasedPage />} />; */}
