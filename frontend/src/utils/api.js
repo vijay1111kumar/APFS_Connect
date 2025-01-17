@@ -24,15 +24,6 @@ export const fetchDashboardMetrics = async (category) => {
   }
 };
 
-export const fetchFlows = async () => {
-  try {
-    const { data } = await apiClient.get('/flows');
-    return data.data;
-  } catch (error) {
-    console.error("Error fetching flows:", error);
-    throw error;
-  }
-};
 
 export const createPromotion = async (requestBody) => {
   try {
@@ -96,8 +87,7 @@ export const fetchPromotionsPerformance = async () => {
 }
 };
 
-
-// --------------------------------------------
+// ---------------- Campaigns ----------------------------
 
 export const createCampaigns = async (requestBody) => {
   try {
@@ -144,6 +134,9 @@ export const fetchPromotionUsers = async (id) => {
 };
 
 
+// ---------------- Remainders ----------------------------
+
+
 export const fetchRemainders = async () => {
   try {
     const { data } = await apiClient.get('/remainders');
@@ -185,6 +178,69 @@ export const fetchUserDetails = async (id) => {
   }
 };
 
+
+// ---------------- Flows ----------------------------
+
+export const fetchFlows = async () => {
+  try {
+    const { data } = await apiClient.get('/flows');
+    return data.data; 
+  } catch (error) {
+    console.error("Error fetching flows:", error);
+    throw error;
+  }
+};
+
+export const createFlow = async (flowData) => {
+  try {
+    const { data } = await apiClient.post('/flows', flowData);
+    return data; // 
+  } catch (error) {
+    console.error("Error creating flow:", error);
+    throw error;
+  }
+};
+
+export const updateFlow = async (flowId, updatedData) => {
+  try {
+    const { data } = await apiClient.patch(`/flows/${flowId}`, updatedData);
+    return data; 
+  } catch (error) {
+    console.error(`Error updating flow with ID ${flowId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteFlow = async (flowId) => {
+  try {
+    const { data } = await apiClient.delete(`/flows/${flowId}`);
+    return data; 
+  } catch (error) {
+    console.error(`Error deleting flow with ID ${flowId}:`, error);
+    throw error;
+  }
+};
+
+export const toggleFlowStatus = async (flowId, isActive) => {
+  try {
+    const endpoint = isActive ? `/flows/${flowId}/activate` : `/flows/${flowId}/deactivate`;
+    const { data } = await apiClient.post(endpoint); // Assuming POST to toggle activation
+    return data; // Return the updated flow status
+  } catch (error) {
+    console.error(`Error toggling flow status for ID ${flowId}:`, error);
+    throw error;
+  }
+};
+
+export const fetchFlowsPerformance = async () => {
+  try {
+    const { data } = await apiClient.get('/flows?performance');
+    return data.data;
+  } catch (error) {
+    console.error("Failed to fetch flow performance data:", error);
+    throw error;
+  }
+};
 
 // Upload Function
 // -----------------------------------------------
