@@ -1,11 +1,13 @@
 import React from "react";
 
-const Table = ({ data = [] }) => {
+const Table = ({ title, data = [] }) => {
   // Extract headers from the keys of the first object in the data array
   const headers = data.length > 0 ? Object.keys(data[0]) : [];
 
   return (
     <div className="overflow-x-auto">
+    {title && <h3 className="text-lg font-bold mb-4">{title}</h3>}
+
       <table className="min-w-full divide-y-2 divide-gray-200 bg-white text-sm">
         <thead className="text-left">
           <tr>

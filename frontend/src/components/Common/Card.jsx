@@ -9,7 +9,7 @@ const Card = ({ title, current_value, past_value, trend }) => {
                 : "bg-gray-100 text-gray-500";
 
     return (
-        <article className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4">
+        <article className="flex flex-col gap-1 rounded-lg border border-gray-200 from-bg-green-100  p-4">
             {trend && (
                 <div className={`inline-flex gap-2 self-end rounded p-1 ${trendClasses}`}>
                     <svg
