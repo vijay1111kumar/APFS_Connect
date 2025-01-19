@@ -9,6 +9,7 @@ import TestPage from "./pages/TestPage";
 import UserDetailsPage from "./pages/UserDetailsPage";
 
 import CampaignsPage from "./pages/CampaignsPage";
+import CampaignDetailPage from "./pages/CampaignDetailPage";
 
 import PromotionsPage from "./pages/PromotionsPage";
 import PromotionsDetailsPage from "./pages/PromotionsDetailsPage";
@@ -19,23 +20,26 @@ import RemaindersUserDetailsPage from "./pages/RemaindersUserDetailsPage";
 import RemaindersDetailsPage from "./pages/RemaindersDetailsPage";
 
 import FlowsPage from "./pages/FlowsPage"
+import FlowDetailPage from "./pages/FlowDetailPage";
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/campaigns" element={<CampaignsPage />} />
+        <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
         <Route path="/flows" element={<FlowsPage />} />
-        <Route path="/remainders" element={<RemaindersPage />} />
+        <Route path="/flows/:id" element={<FlowDetailPage />} /> 
         {/* <Route path="/flow-stats" element={<FlowStatsPage />} /> */}
         {/* <Route path="/time-based" element={<TimeBasedPage />} />; */}
         {/* <Route path="/error-analytics" element={<ErrorAnalyticsPage />} />; */}
         {/* <Route path="/summary" element={<SummaryPage />} />; */}
         {/* <Route path="/test" element={<TestPage />} />; */}
+        <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/promotions/:id" element={<PromotionsDetailsPage />} /> 
         <Route path="/promotions/users/:id" element={<PromotionUserDetailsPage />} />
+        <Route path="/remainders" element={<RemaindersPage />} />
         <Route path="/remainders/:id" element={<RemaindersDetailsPage />} /> 
         <Route path="/remainders/users/:id" element={<RemaindersUserDetailsPage />} />
         <Route path="/users/:id" element={<UserDetailsPage />} />
