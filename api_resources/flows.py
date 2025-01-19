@@ -8,10 +8,11 @@ from database.repositories import flow_repo
 from database.models import Flow
 from utils.validators import SchemaValidator
 
+from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, and_
 from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
 from database.models import CampaignMetrics, Campaign, Flow, Promotion, Remainder
+from sqlalchemy_serializer import serialize_collection
 
 def fetch_flow_performance(session: Session, start_date: datetime=None, end_date: datetime=None):
     performance_data = {}
@@ -96,16 +97,92 @@ class FlowResource(BaseResource):
         with handle_request(self.logger, resp):
             with get_db() as db:
 
-                filters = req.params
-                if "performance" in filters:
-                    result = fetch_flow_performance(db)
-                    return send_success(resp, "Flow's Performance", data=result)
+                if not id:
+                    filters = req.params
+
+                    if "performance" in filters:
+                        result = fetch_flow_performance(db)
+                        return send_success(resp, "Flow's Performance", data=result)
+
+                if req.path.endswith("/campaigns"):
+                    return self.get_campaigns_with_flow(db, id, resp)
+                
+                if req.path.endswith("/promotions"):
+                    return self.get_promotions_with_flow(db, id, resp)
+                
+                if req.path.endswith("/remainders"):
+                    return self.get_remainders_with_flow(db, id, resp)
 
                 result, error = self.handle_get(db, id)
                 if error:
                     return send_error(resp, error, HTTP_404)
                 return send_success(resp, data=result)
 
+
+    def get_campaigns_with_flow(self, db: Session, flow_id: str, resp):
+        """
+        Fetch all campaigns linked to a given flow by its ID.
+        """
+        try:
+            promotion_ids = db.query(Promotion.id).filter(Promotion.connected_flow == flow_id).subquery()
+            remainder_ids = db.query(Remainder.id).filter(Remainder.connected_flow == flow_id).subquery()
+
+            campaigns = db.query(Campaign).filter(
+                or_(
+                    and_(Campaign.activity_type == "PROMOTION", Campaign.activity_id.in_(promotion_ids)),
+                    and_(Campaign.activity_type == "REMAINDER", Campaign.activity_id.in_(remainder_ids))
+                )
+            ).all()
+
+            campaign_data = [
+                {
+                    "id": campaign.id,
+                    "name": campaign.name,
+                    # "schedule_at": campaign.schedule_at,
+                    "is_active": campaign.is_active,
+                    "created_by": campaign.created_by,
+                    # "created_at": campaign.created_at,
+                    "activity_type": campaign.activity_type.value,
+                    "activity_id": campaign.activity_id,
+                }
+                for campaign in campaigns
+            ]
+
+            return send_success(resp, data=campaign_data)
+
+        except Exception as e:
+            return send_error(resp, f"Error fetching campaigns for flow: {e}")
+
+                
+
+    def get_promotions_with_flow(self, db, flow_id, resp):
+        try:
+            promotions = (
+                db.query(Promotion)
+                .filter(Promotion.connected_flow == flow_id)
+                .all()
+            )
+            promotions = serialize_collection(promotions)
+            return send_success(resp, data=promotions)
+
+        except Exception as e:
+            self.logger.error(f"Error fetching promotions with connected flow as {flow_id}: {e}")
+            raise e
+            
+    def get_remainders_with_flow(self, db, flow_id, resp):
+        try:
+            remainders = (
+                db.query(Remainder)
+                .filter(Remainder.connected_flow == flow_id)
+                .all()
+            )
+            remainders = serialize_collection(remainders)
+            return send_success(resp, data=remainders)
+
+        except Exception as e:
+            self.logger.error(f"Error fetching remainders with connected flow as {flow_id}: {e}")
+            raise e
+        
     def on_post(self, req, resp, id=None):
         with handle_request(self.logger, resp):
             with get_db() as db:
