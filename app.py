@@ -892,6 +892,9 @@ app.add_route("/apfsconnect/api/promotions/{id}/campaigns", promotions)
 flows = FlowResource(logger)
 app.add_route("/apfsconnect/api/flows", flows)                    # For POST and GET all
 app.add_route("/apfsconnect/api/flows/{id}", flows)               # For GET, PATCH, DELETE by ID
+app.add_route("/apfsconnect/api/flows/{id}/promotions", flows)
+app.add_route("/apfsconnect/api/flows/{id}/remainders", flows)
+app.add_route("/apfsconnect/api/flows/{id}/campaigns", flows)
 
 # Campaigns endpoints
 campaigns = CampaignResource(logger)
