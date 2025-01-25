@@ -1,8 +1,21 @@
 import datetime
 import enum
 
+from sqlalchemy import (
+    Column,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Enum,
+    JSON,
+    Interval,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy import  Column, String, Integer, Boolean, Text, ForeignKey, Enum, DateTime, Interval
 
 from . import Base
 
@@ -12,14 +25,17 @@ class MessageType(enum.Enum):
     VIDEO = "video"
     AUDIO = "audio"
 
+
 class ActivityType(enum.Enum):
     PROMOTION = "Promotion"
     REMAINDER = "Remainder"
+
 
 class IntervalUnit(enum.Enum):
     MINUTES = "MINUTES"
     HOURS = "HOURS"
     DAYS = "DAYS"
+
 
 class User(Base, SerializerMixin):
     __tablename__ = "users"
@@ -33,6 +49,7 @@ class User(Base, SerializerMixin):
     created_at = Column(DateTime, default=datetime.datetime.now)
     modified_by = Column(String, ForeignKey("users.id"))
     modified_at = Column(DateTime, onupdate=datetime.datetime.now)
+
 
 class Flow(Base, SerializerMixin):
     __tablename__ = "flows"
@@ -84,7 +101,7 @@ class Remainder(Base, SerializerMixin):
     modified_by = Column(String, ForeignKey("users.id"))
     modified_at = Column(DateTime, onupdate=datetime.datetime.now)
     excel_file = Column(String, nullable=True)
-
+    
 class Campaign(Base, SerializerMixin):
     __tablename__ = "campaigns"
 
@@ -102,40 +119,33 @@ class Campaign(Base, SerializerMixin):
     last_run_by = Column(String, ForeignKey("users.id"))
     total_runs = Column(Integer, default=0)
     repeat_count = Column(Integer, default=0)
-    repeat_interval_value = Column(Integer, nullable=True) 
+    repeat_interval_value = Column(Integer, nullable=True)
     repeat_interval_unit = Column(Enum(IntervalUnit), nullable=True)
+    metrics = Column(JSONB, default={})  # Aggregated metrics for the campaign
     customer_excel_file = Column(String, nullable=True)
+    flow = Column(String, ForeignKey("flows.id"), nullable=True)
 
-    def fetch_campaign_connected_flow(self, session):
-        if self.activity_type.value == "Promotion":
-            activity = session.query(Promotion).filter(Promotion.id == self.activity_id).first()
-        elif self.activity_type.value == "Remainder":
-            activity = session.query(Remainder).filter(Remainder.id == self.activity_id).first()
-        else:
-            raise ValueError(f"Unsupported activity type: {self.activity_type.value}")
 
-        return activity.connected_flow if activity else None
-    
-    
-class CampaignMetrics(Base, SerializerMixin):
-    __tablename__ = "campaign_metrics"
+class CampaignJob(Base, SerializerMixin):
+    __tablename__ = "campaign_jobs"
 
-    id = Column(String, primary_key=True)
+    id = Column(String, primary_key=True)  # Celery Job ID
     campaign_id = Column(String, ForeignKey("campaigns.id"), nullable=False)
-    total_users_targeted = Column(Integer, default=0)
-    messages_attempted = Column(Integer, default=0)
-    messages_failed = Column(Integer, default=0)
-    messages_delivered = Column(Integer, default=0)
-    messages_unread = Column(Integer, default=0)
-    flow_completed = Column(Integer, default=0)
-    flow_cutoffs = Column(Integer, default=0)
+    schedule_time = Column(DateTime, nullable=False)
+    retry_interval = Column(Integer, nullable=True)
+    retry_attempts = Column(Integer, nullable=True)
+    status = Column(String, default="Scheduled")  # Scheduled, Completed, Failed, Cancelled, InProcess
+    parent_campaign_job_id = Column(String, ForeignKey("campaign_jobs.id"), nullable=True)
+    re_targeting_criteria = Column(JSONB, nullable=True)  # Criteria for re-targeting users
     created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
-class UserCampaignInteraction(Base, SerializerMixin):
-    __tablename__ = "user_campaign_interactions"
+
+class CampaignUserConversationMetadata(Base, SerializerMixin):
+    __tablename__ = "campaign_user_conversation_metadata"
 
     id = Column(String, primary_key=True)
-    campaign_id = Column(String, ForeignKey("campaigns.id"), nullable=False)
+    campaign_job_id = Column(String, ForeignKey("campaign_jobs.id"), nullable=False)
     user_id = Column(String, ForeignKey("users.id"), nullable=True)
     phone_no = Column(String, nullable=False)
     flow_id = Column(String, ForeignKey("flows.id"))
@@ -149,25 +159,17 @@ class UserCampaignInteraction(Base, SerializerMixin):
     total_time_spent = Column(Interval)
     created_at = Column(DateTime, default=datetime.datetime.now)
 
-class UserConversation(Base, SerializerMixin):
-    __tablename__ = "user_conversations"
+
+class CampaignMetrics(Base, SerializerMixin):
+    __tablename__ = "campaign_metrics"
 
     id = Column(String, primary_key=True)
-    interaction_id = Column(String, ForeignKey("user_campaign_interactions.id"), nullable=False)
-    from_user = Column(Boolean, default=False)
-    sender_name = Column(String, nullable=True)
-    message = Column(Text, nullable=False)
-    message_type = Column(Enum(MessageType), nullable=False)
-    timestamp = Column(DateTime, default=datetime.datetime.now)
-
-class CampaignJob(Base, SerializerMixin):
-    __tablename__ = "campaign_jobs"
-
-    id = Column(String, primary_key=True)  # Celery Job ID
-    campaign_id = Column(String, ForeignKey("campaigns.id"), nullable=False)
-    schedule_time = Column(DateTime, nullable=False)
-    retry_interval = Column(Integer, nullable=True)
-    retry_attempts = Column(Integer, nullable=True)
-    status = Column(String, default="Scheduled")  # Scheduled, Completed, Failed, Cancelled, InProcess
+    campaign_job_id = Column(String, ForeignKey("campaign_jobs.id"), nullable=False)
+    total_users_targeted = Column(Integer, default=0)
+    messages_attempted = Column(Integer, default=0)
+    messages_failed = Column(Integer, default=0)
+    messages_delivered = Column(Integer, default=0)
+    messages_unread = Column(Integer, default=0)
+    flow_completed = Column(Integer, default=0)
+    flow_cutoffs = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
