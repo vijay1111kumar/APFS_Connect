@@ -11,10 +11,14 @@ from utils.validators import SchemaValidator
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, and_
 from datetime import datetime, timedelta
-from database.models import CampaignMetrics, Campaign, Flow, Promotion, Remainder
+from database.models import CampaignMetrics, Campaign, Flow, Promotion, Remainder, CampaignJob
 from sqlalchemy_serializer import serialize_collection
 
-def fetch_flow_performance(session: Session, start_date: datetime=None, end_date: datetime=None):
+from sqlalchemy import func, or_, and_
+from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+
+def fetch_flow_performance(session: Session, start_date: datetime = None, end_date: datetime = None):
     performance_data = {}
 
     if not end_date:
@@ -27,7 +31,6 @@ def fetch_flow_performance(session: Session, start_date: datetime=None, end_date
         return {"message": "No flows found.", "data": {}}
 
     for flow in flows:
-
         total_users = 0
         flow_completed = 0
         flow_cutoffs = 0
@@ -37,10 +40,10 @@ def fetch_flow_performance(session: Session, start_date: datetime=None, end_date
         flow_id = flow.id
         flow_name = flow.name
 
+        # Fetch campaigns connected to this flow through promotions and remainders
         promotion_subquery = session.query(Promotion.id).filter(Promotion.connected_flow == flow_id).subquery()
         remainder_subquery = session.query(Remainder.id).filter(Remainder.connected_flow == flow_id).subquery()
 
-        # Query campaigns based on activity type and activity IDs
         campaigns = session.query(Campaign).filter(
             or_(
                 and_(Campaign.activity_type == "PROMOTION", Campaign.activity_id.in_(promotion_subquery)),
@@ -48,15 +51,24 @@ def fetch_flow_performance(session: Session, start_date: datetime=None, end_date
             )
         ).all()
 
+        # Aggregate metrics from CampaignJobs and CampaignMetrics
         for campaign in campaigns:
+            campaign_jobs = session.query(CampaignJob.id).filter(CampaignJob.campaign_id == campaign.id).all()
+            campaign_job_ids = [job.id for job in campaign_jobs]
+
+            if not campaign_job_ids:
+                continue
+
             metrics = (
-                session.query(func.sum(CampaignMetrics.total_users_targeted).label("total_users"),
-                              func.sum(CampaignMetrics.flow_completed).label("flow_completed"),
-                              func.sum(CampaignMetrics.flow_cutoffs).label("flow_cutoffs"),
-                              func.sum(CampaignMetrics.messages_attempted).label("messages_attempted"),
-                              func.sum(CampaignMetrics.messages_delivered).label("messages_delivered"),
-                              func.sum(CampaignMetrics.messages_failed).label("messages_failed"))
-                .filter(CampaignMetrics.campaign_id == campaign.id)
+                session.query(
+                    func.sum(CampaignMetrics.total_users_targeted).label("total_users"),
+                    func.sum(CampaignMetrics.flow_completed).label("flow_completed"),
+                    func.sum(CampaignMetrics.flow_cutoffs).label("flow_cutoffs"),
+                    func.sum(CampaignMetrics.messages_attempted).label("messages_attempted"),
+                    func.sum(CampaignMetrics.messages_delivered).label("messages_delivered"),
+                    func.sum(CampaignMetrics.messages_failed).label("messages_failed"),
+                )
+                .filter(CampaignMetrics.campaign_job_id.in_(campaign_job_ids))
                 .filter(CampaignMetrics.created_at.between(start_date, end_date))
                 .first()
             )
@@ -79,9 +91,10 @@ def fetch_flow_performance(session: Session, start_date: datetime=None, end_date
             "values": [
                 {
                     "date": str((start_date + timedelta(days=i)).date()),
-                    "value": flow_completed + flow_cutoffs 
-                } for i in range((end_date - start_date).days + 1)
-            ]
+                    "value": flow_completed + flow_cutoffs,
+                }
+                for i in range((end_date - start_date).days + 1)
+            ],
         }
 
     return performance_data
