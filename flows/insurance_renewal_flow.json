@@ -1,13 +1,13 @@
 {
-    "name": "Get Documents Flow",
-    "id": "customer_loan_documents_fetcher",
-    "trigger": "/documents",
+    "name": "Insurance Renewal Reminder Flow",
+    "id": "insurance_renewal_reminder_flow",
+    "trigger": "/insurance_reminder",
     "start": "step1",
     "end": "step3",
     "steps": [
         {
             "id": "step1",
-            "name": "Enter Loan ID",
+            "name": "Reminder Message",
             "sequence_no": 1,
             "type": "message",
             "action": "send_message",
@@ -15,18 +15,12 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Please enter your Loan ID to fetch the documents."
-            },
-            "processor": [{
-                "name": "process_loan_id",
-                "payload_template": {
-                    "loan_id": "{{user_response}}"
-                }
-            }]
+                "body": "Hi {{customer_name}}, your two-wheeler insurance is expiring on {{expiry_date}}. Renew now to stay protected!"
+            }
         },
         {
             "id": "step2",
-            "name": "Enter OTP",
+            "name": "Renewal Options",
             "sequence_no": 2,
             "type": "message",
             "action": "send_message",
@@ -34,18 +28,12 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Please enter the OTP sent to your phone number."
-            },
-            "processor": [{
-                "name": "process_otp",
-                "payload_template": {
-                    "otp": "{{user_response}}"
-                }
-            }]
+                "body": "Click here to renew your insurance: {{renewal_link}}."
+            }
         },
         {
             "id": "step3",
-            "name": "Send Documents",
+            "name": "Confirmation",
             "sequence_no": 3,
             "type": "message",
             "action": "send_message",
@@ -53,7 +41,7 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Your documents have been sent successfully!"
+                "body": "Thank you for renewing your insurance!"
             }
         }
     ],

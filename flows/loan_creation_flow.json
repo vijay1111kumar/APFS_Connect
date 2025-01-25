@@ -1,0 +1,99 @@
+{
+    "name": "Loan Application Flow",
+    "id": "loan_application_flow",
+    "trigger": "/apply_loan",
+    "start": "step1",
+    "end": "step5",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Welcome Message",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Welcome to our Two-Wheeler Financing service! Let's get started with your loan application."
+            }
+        },
+        {
+            "id": "step2",
+            "name": "Enter Personal Details",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Please enter your full name, phone number, and email address."
+            },
+            "processor": [{
+                "name": "process_personal_details",
+                "payload_template": {
+                    "name": "{{user_response.name}}",
+                    "phone": "{{user_response.phone}}",
+                    "email": "{{user_response.email}}"
+                }
+            }]
+        },
+        {
+            "id": "step3",
+            "name": "Enter Vehicle Details",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step4",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Please enter the make, model, and price of the two-wheeler you wish to finance."
+            },
+            "processor": [{
+                "name": "process_vehicle_details",
+                "payload_template": {
+                    "make": "{{user_response.make}}",
+                    "model": "{{user_response.model}}",
+                    "price": "{{user_response.price}}"
+                }
+            }]
+        },
+        {
+            "id": "step4",
+            "name": "Upload Documents",
+            "sequence_no": 4,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step5",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Please upload your ID proof, address proof, and income proof."
+            },
+            "processor": [{
+                "name": "process_documents",
+                "payload_template": {
+                    "id_proof": "{{user_response.id_proof}}",
+                    "address_proof": "{{user_response.address_proof}}",
+                    "income_proof": "{{user_response.income_proof}}"
+                }
+            }]
+        },
+        {
+            "id": "step5",
+            "name": "Application Confirmation",
+            "sequence_no": 5,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Thank you for applying! Your loan application has been submitted successfully. We will contact you shortly."
+            }
+        }
+    ],
+    "is_active": true
+}

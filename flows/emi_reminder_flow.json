@@ -1,13 +1,13 @@
 {
-    "name": "Get Documents Flow",
-    "id": "customer_loan_documents_fetcher",
-    "trigger": "/documents",
+    "name": "EMI Payment Reminder Flow",
+    "id": "emi_payment_reminder_flow",
+    "trigger": "/emi_reminder",
     "start": "step1",
     "end": "step3",
     "steps": [
         {
             "id": "step1",
-            "name": "Enter Loan ID",
+            "name": "Reminder Message",
             "sequence_no": 1,
             "type": "message",
             "action": "send_message",
@@ -15,18 +15,12 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Please enter your Loan ID to fetch the documents."
-            },
-            "processor": [{
-                "name": "process_loan_id",
-                "payload_template": {
-                    "loan_id": "{{user_response}}"
-                }
-            }]
+                "body": "Hi {{customer_name}}, your EMI payment of {{emi_amount}} is due on {{due_date}}. Please make the payment to avoid late fees."
+            }
         },
         {
             "id": "step2",
-            "name": "Enter OTP",
+            "name": "Payment Options",
             "sequence_no": 2,
             "type": "message",
             "action": "send_message",
@@ -34,18 +28,12 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Please enter the OTP sent to your phone number."
-            },
-            "processor": [{
-                "name": "process_otp",
-                "payload_template": {
-                    "otp": "{{user_response}}"
-                }
-            }]
+                "body": "You can pay via UPI, Net Banking, or Debit Card. Click here to pay now: {{payment_link}}."
+            }
         },
         {
             "id": "step3",
-            "name": "Send Documents",
+            "name": "Confirmation",
             "sequence_no": 3,
             "type": "message",
             "action": "send_message",
@@ -53,7 +41,7 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Your documents have been sent successfully!"
+                "body": "Thank you for paying your EMI on time!"
             }
         }
     ],

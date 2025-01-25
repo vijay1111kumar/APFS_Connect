@@ -1,13 +1,13 @@
 {
-    "name": "Get Documents Flow",
-    "id": "customer_loan_documents_fetcher",
-    "trigger": "/documents",
+    "name": "Loan Status Check Flow",
+    "id": "loan_status_check_flow",
+    "trigger": "/check_status",
     "start": "step1",
     "end": "step3",
     "steps": [
         {
             "id": "step1",
-            "name": "Enter Loan ID",
+            "name": "Enter Application ID",
             "sequence_no": 1,
             "type": "message",
             "action": "send_message",
@@ -15,18 +15,18 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Please enter your Loan ID to fetch the documents."
+                "body": "Please enter your Loan Application ID to check the status."
             },
             "processor": [{
-                "name": "process_loan_id",
+                "name": "process_application_id",
                 "payload_template": {
-                    "loan_id": "{{user_response}}"
+                    "application_id": "{{user_response}}"
                 }
             }]
         },
         {
             "id": "step2",
-            "name": "Enter OTP",
+            "name": "Fetch Status",
             "sequence_no": 2,
             "type": "message",
             "action": "send_message",
@@ -34,18 +34,12 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Please enter the OTP sent to your phone number."
-            },
-            "processor": [{
-                "name": "process_otp",
-                "payload_template": {
-                    "otp": "{{user_response}}"
-                }
-            }]
+                "body": "Your loan application status is: {{loan_status}}."
+            }
         },
         {
             "id": "step3",
-            "name": "Send Documents",
+            "name": "Follow-up",
             "sequence_no": 3,
             "type": "message",
             "action": "send_message",
@@ -53,7 +47,7 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Your documents have been sent successfully!"
+                "body": "If you have any questions, feel free to contact us at {{support_contact}}."
             }
         }
     ],

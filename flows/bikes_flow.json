@@ -92,7 +92,16 @@
                         ]
                     }
                 }
-            }
+            },
+            "processor": [{
+                "name": "process_test_ride",
+                "wait": true,
+                "payload_template": {
+                    "user_id": "{{user_id}}",
+                    "id": "{{id}}",
+                    "value": "{{value}}"
+                }
+            }]
         },
         {
             "id": "step4",
