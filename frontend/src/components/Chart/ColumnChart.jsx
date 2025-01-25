@@ -7,7 +7,7 @@ const ColumnChart = ({ data, title = "Leads Generated", subtitle = "Per Week" })
   const categories = data.categories;
 
   const options = {
-    colors: ["#d9dd92", "#eabe7c", "#dd6031", "#311e10", "#a9b665", "#5c6370"],
+    colors: ["#3f4739","#d0e37f", "#b8b08d", "#202c39", "#283845",  "#f2d492", "#f29559", "#d1603d", "#ddb967", "#717568"],
     chart: {
       type: "bar",
       height: "320px",

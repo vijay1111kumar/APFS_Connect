@@ -31,9 +31,11 @@ const PromotionsTable = ({ promotions }) => {
   });
 
   return (
-    <div className="p-4 bg-white rounded border border-gray-200">
-      <h3 className="text-lg font-bold mb-4">Promotions List</h3>
-      <Table data={formattedPromotions} />
+    <div>
+      <div className="grid-cols-2 lg:col-col-span-2 md:col-span-1 sm:col-span-1 lg:p-4 p-2 m-2 bg-white rounded-md border-2 border-gray-300">
+        <h3 className="text-xl text-primary font-bold mb-4">Promotions List</h3>
+        <Table data={formattedPromotions} />
+      </div>
     </div>
   );
 };

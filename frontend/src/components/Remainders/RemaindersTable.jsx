@@ -10,7 +10,7 @@ const Remainders = ({ remainders }) => {
   };
 
   return (
-    <div className="p-4 bg-white rounded border border-gray-200">
+    <div className="grid-cols-2 lg:col-col-span-2 md:col-span-1 sm:col-span-1 p-4 bg-white rounded border-2 border-gray-200">
       <h3 className="text-lg font-bold mb-4">Remainders List</h3>
       <Table
         data={remainders.map((remainder) => ({

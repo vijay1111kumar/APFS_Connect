@@ -11,7 +11,7 @@ const Tabs = ({ onTabChange }) => {
   };
 
   return (
-    <div className="flex mb-6 justify-center">
+    <div className="flex m-4 justify-center transition-all ease-in-out duration-500">
       {/* Mobile View */}
       <div className="sm:hidden">
         <label htmlFor="Tab" className="sr-only">
@@ -39,9 +39,9 @@ const Tabs = ({ onTabChange }) => {
             <button
               key={tab}
               onClick={() => handleTabClick(tab)}
-              className={`shrink-0 rounded-lg p-2 text-sm font-medium ${
+              className={`shrink-0 rounded-lg p-3 text-sm font-medium transition-all duration-300 ${
                 activeTab === tab
-                  ? "bg-gray-100 text-gray-600"
+                  ? " duration-300 ease-in-out bg-gray-100 text-gray-600 "
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
               }`}
               aria-current={activeTab === tab ? "page" : undefined}

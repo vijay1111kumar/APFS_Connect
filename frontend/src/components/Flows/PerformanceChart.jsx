@@ -63,13 +63,13 @@ const PerformanceChart = ({ fetchFlowsPerformance }) => {
   };
 
   return (
-    <div className="p-4 bg-white rounded border border-gray-200">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold">Performance Chart</h3>
+    <div className="p-4 m-2 sm:min-w-fit bg-white rounded-md border-2 border-gray-300">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-xl sm:text-xl text-primary font-bold ml-4">Performance Chart</h3>
 
-      <div className="chartControls flex gap-4">
+      <div className="chartControls flex lg:flex-row md:flex-col sm:flex-col gap-4">
         <select
-          className="rounded border-gray-300 px-3 py-2 text-sm"
+          className="border-2 rounded-md border-gray-300 px-3 py-2 text-sm focus:ring-focus focus:border-focus "
           value={timePeriod}
           onChange={(e) => setTimePeriod(e.target.value)}
         >
@@ -80,7 +80,7 @@ const PerformanceChart = ({ fetchFlowsPerformance }) => {
         </select>
 
         <select
-          className="rounded border-gray-300 px-3 py-2 text-sm"
+          className="border-2 rounded-md border-gray-300 px-3 py-2 text-sm focus:ring-focus focus:border-focus "
           value={selectedId || ""}
           onChange={(e) => setSelectedId(e.target.value || null)} // Reset to all Flows if no ID selected
         >

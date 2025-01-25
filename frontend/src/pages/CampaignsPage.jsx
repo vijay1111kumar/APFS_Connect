@@ -7,12 +7,18 @@ import Insights from "../components/Common/Insights";
 import PerformanceChart from "../components/Campaigns/PerformanceChart";
 import CampaignsTable from "../components/Campaigns/CampaignsTable";
 import CampaignsModal from "../components/Campaigns/CampaignsModal";
+import AreaChart from "../components/Campaigns/AreaChart";
 
 const CampaignsPage = () => {
   const [alert, setAlert] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
-  const [totalStats, setTotalStats] = useState({ total: 0, active: 0, scheduled: 0, completed: 0 });
-  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
+  const [totalStats, setTotalStats] = useState({
+    total: 0,
+    active: 0,
+    scheduled: 0,
+    completed: 0,
+  });
+  const [selectedCampaigns, setSelectedCampaigns] = useState([]); // Array of selected campaigns
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -21,7 +27,10 @@ const CampaignsPage = () => {
         const data = await fetchCampaigns();
         setCampaigns(data);
 
-        if (data.length > 0) setSelectedCampaignId(data[0].id); 
+        // Set default selected campaigns (first 3 campaigns)
+        const defaultSelection = data.slice(0, 3).map((campaign) => campaign.id);
+        setSelectedCampaigns(defaultSelection);
+
         setTotalStats({
           total: data.length,
           active: data.filter((campaign) => campaign.is_active === true).length,
@@ -38,49 +47,66 @@ const CampaignsPage = () => {
 
   const refreshCampaignsTable = async () => {
     try {
-      // Fetch the updated campaigns list
       const updatedCampaigns = await fetchCampaigns();
       setCampaigns(updatedCampaigns);
-  
-      // Update the total statistics based on the new campaigns data
+
       setTotalStats({
         total: updatedCampaigns.length,
         active: updatedCampaigns.filter((campaign) => campaign.is_active === true).length,
         scheduled: updatedCampaigns.filter((campaign) => campaign.is_active !== true).length,
         completed: updatedCampaigns.filter((campaign) => campaign.status === "Completed").length,
       });
-  
-      console.log("Campaigns table refreshed!");
     } catch (error) {
       console.error("Error refreshing campaigns table:", error);
     }
   };
 
+  const handleCampaignSelection = (selectedIds) => {
+    setSelectedCampaigns(selectedIds);
+  };
+
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-6 rounded-lg border border-gray-200 bg-white">
-      {alert && <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
+      <div className="space-y-6 m-x-6 p-6 sm:p-4 rounded-lg border-2 border-gray-300 bg-white">
+        {alert && (
+          <Alert
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        )}
 
+        {/* Header Section */}
         <Header
           title="Campaigns"
           description="Configure your campaigns here..."
           buttonText="Create"
-          onButtonClick={() => setIsModalOpen(true)} 
+          onButtonClick={() => setIsModalOpen(true)}
         />
+
+        {/* Insights Section */}
         <Insights totalStats={totalStats} />
-        {/* <PerformanceChart
-          records={campaigns}
-          selectedId={selectedCampaignId}
-          onChange={setSelectedCampaignId}
-        /> */}
+
+        {/* Performance Chart Section */}
         <PerformanceChart fetchCampaignsPerformance={fetchCampaignsPerformance} />
-        <CampaignsTable campaigns={campaigns} />
+
+        {/* Area Chart Section */}
+        {/* <AreaChart campaignIds={selectedCampaigns} /> */}
+
+        {/* Campaigns Table */}
+        <CampaignsTable
+          campaigns={campaigns}
+          onSelectionChange={handleCampaignSelection} // Pass selection handler
+        />
+
+        {/* Campaign Modal */}
         {isModalOpen && (
-          <CampaignsModal 
-          onClose={() => setIsModalOpen(false)} 
-          onCampaignCreated={refreshCampaignsTable}
-          setGlobalAlert={setAlert}
-          />)}
+          <CampaignsModal
+            onClose={() => setIsModalOpen(false)}
+            onCampaignCreated={refreshCampaignsTable}
+            setGlobalAlert={setAlert}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

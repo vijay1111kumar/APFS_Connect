@@ -58,7 +58,7 @@ const PromotionsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-6 rounded-lg border border-gray-200 bg-white">
+      <div className="space-y-6 m-x-6 p-6 sm:p-4 rounded-md border-2 border-gray-300 bg-white">
       {alert && <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />}
 
         <Header
@@ -68,11 +68,6 @@ const PromotionsPage = () => {
           onButtonClick={() => setIsModalOpen(true)} 
         />
         <Insights totalStats={totalStats} />
-        {/* <PerformanceChart
-          records={promotions}
-          selectedId={selectedPromotionId}
-          onChange={setSelectedPromotionId}
-        /> */}
         <PerformanceChart fetchPromotionsPerformance={fetchPromotionsPerformance} />
         <PromotionsTable promotions={promotions} />
         {isModalOpen && (

@@ -5,8 +5,12 @@ const ColumnChart = ({ data, title, subtitle }) => {
   const series = data.series;
   const categories = data.categories;
 
+  
+
   const options = {
-    colors: ["#1A56DB", "#FDBA8C", "#D9DD92", "#EABE7C", "#DD6031", "#311E10"],
+    colors: ["#202c39", "#283845", "#b8b08d", "#f2d492", "#f29559", "#d1603d", "#ddb967", "#d0e37f", "#717568", "#3f4739"],
+    // colors: ["#202c39", "#283845", "#b8b08d", "#f2d492", "#f29559"],
+    // colors: ["#1A56DB", "#FDBA8C", "#D9DD92", "#EABE7C", "#DD6031", "#311E10"],
     chart: {
       type: "bar",
       stacked: true, // Enable stacked bars
