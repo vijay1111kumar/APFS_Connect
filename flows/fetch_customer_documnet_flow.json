@@ -1,46 +1,76 @@
 {
-    "name": "Get Documents Flow",
-    "id": "customer_loan_documents_fetcher",
+    "name": "Fetch Loan Documents Flow",
+    "id": "fetch_loan_documents_flow",
     "trigger": "/documents",
     "start": "step1",
     "end": "step3",
     "steps": [
         {
             "id": "step1",
-            "name": "Enter Loan ID",
+            "name": "Fetch Loan Details",
             "sequence_no": 1,
             "type": "message",
             "action": "send_message",
             "next_step": "step2",
             "is_active": true,
+            "processor": [{
+                "name": "process_fetch_loan_details",
+                "payload_template": {
+                    "user_id": "{{user_id}}"
+                }
+            }],
             "content": {
                 "type": "text",
-                "body": "Please enter your Loan ID to fetch the documents."
-            },
-            "processor": [{
-                "name": "process_loan_id",
-                "payload_template": {
-                    "loan_id": "{{user_response}}"
-                }
-            }]
+                "body": "Fetching your loan details... 📄"
+            }
         },
         {
             "id": "step2",
-            "name": "Enter OTP",
+            "name": "Select Documents",
             "sequence_no": 2,
             "type": "message",
             "action": "send_message",
             "next_step": "step3",
             "is_active": true,
             "content": {
-                "type": "text",
-                "body": "Please enter the OTP sent to your phone number."
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {
+                        "type": "text",
+                        "text": "📄 Available Loan Documents"
+                    },
+                    "body": {
+                        "text": "Select the documents you want to receive:"
+                    },
+                    "footer": {
+                        "text": "Choose one or multiple"
+                    },
+                    "action": {
+                        "button": "Select Documents",
+                        "sections": [
+                            {
+                                "title": "Documents",
+                                "rows": [
+                                    { "id": "emi_schedule", "title": "EMI Schedule", "description": "Detailed EMI payment plan." },
+                                    { "id": "delivery_order", "title": "Delivery Order", "description": "Proof of bike delivery." },
+                                    { "id": "sanction_order", "title": "Sanction Order", "description": "Loan approval document." },
+                                    { "id": "bike_invoice", "title": "Bike Invoice", "description": "Invoice for your bike purchase." },
+                                    { "id": "signed_loan_agreement_pdf", "title": "Loan Agreement", "description": "Signed agreement document." },
+                                    { "id": "all", "title": "All Documents", "description": "Get all loan documents" }
+                                ]
+                            }
+                        ]
+                    }
+                }
             },
             "processor": [{
-                "name": "process_otp",
+                "name": "process_fetch_selected_documents",
                 "payload_template": {
-                    "otp": "{{user_response}}"
-                }
+                    "user_id": "{{user_id}}",
+                    "selected_documents": "{{id}}"
+                },
+                "wait": true
             }]
         },
         {
@@ -53,8 +83,14 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Your documents have been sent successfully!"
-            }
+                "body": "📨 Fetching your selected documents..."
+            },
+            "processor": [{
+                "name": "process_send_documents",
+                "payload_template": {
+                    "user_id": "{{user_id}}"
+                }
+            }]
         }
     ],
     "is_active": true

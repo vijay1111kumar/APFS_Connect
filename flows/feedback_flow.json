@@ -1,0 +1,55 @@
+{
+    "name": "Feedback Flow",
+    "id": "feedback_flow",
+    "trigger": "/feedback",
+    "start": "step1",
+    "end": "step3",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Feedback Request",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "We value your feedback! Please share your thoughts about our service."
+            }
+        },
+        {
+            "id": "step2",
+            "name": "Collect Feedback",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Your feedback is important to us. Thank you!"
+            },
+            "processor": [{
+                "name": "process_feedback",
+                "payload_template": {
+                    "feedback": "{{user_response}}"
+                }
+            }]
+        },
+        {
+            "id": "step3",
+            "name": "Thank You Message",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Thank you for your feedback! Have a great day!"
+            }
+        }
+    ],
+    "is_active": true
+}

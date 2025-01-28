@@ -1,0 +1,183 @@
+{
+    "name": "Financial Literacy Quiz",
+    "id": "financial_quiz_flow",
+    "trigger": "/quiz",
+    "start": "step1",
+    "end": "step5",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Welcome Message",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "🎉 Welcome to the APFS Quiz! Test your knowledge about maintaining a good credit score and getting eligible for loans. \n Let's start!"
+            }
+        },
+        {
+            "id": "step2",
+            "name": "Question 1",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {
+                        "type": "text",
+                        "text": "Q1: What impacts your credit score the most?"
+                    },
+                    "body": {
+                        "text": "Choose one option:"
+                    },
+                    "footer": {
+                        "text": "Powered by Financial Literacy"
+                    },
+                    "action": {
+                        "button": "Select Answer",
+                        "sections": [
+                            {
+                                "title": "Options",
+                                "rows": [
+                                    { "id": "q1_a", "title": "Option A", "description": "Your income" },
+                                    { "id": "q1_b", "title": "Option B", "description": "Payment history" },
+                                    { "id": "q1_c", "title": "Option C", "description": "Your age" }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "processor": [{
+                "name": "process_quiz_answer",
+                "payload_template": {
+                    "question": "Q1",
+                    "answer_id": "{{id}}",
+                    "answer_value": "{{value}}"
+                },
+                "wait": true
+            }]
+        },
+        {
+            "id": "step3",
+            "name": "Question 2",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step4",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {
+                        "type": "text",
+                        "text": "Q2: How can you improve your loan eligibility?"
+                    },
+                    "body": {
+                        "text": "Choose one option:"
+                    },
+                    "footer": {
+                        "text": "Powered by Financial Literacy"
+                    },
+                    "action": {
+                        "button": "Select Answer",
+                        "sections": [
+                            {
+                                "title": "Options",
+                                "rows": [
+                                    { "id": "q2_a", "title": "Option A", "description": "Increase credit card usage" },
+                                    { "id": "q2_b", "title": "Option B", "description": "Maintain a stable job and income" },
+                                    { "id": "q2_c", "title": "Option C", "description": "Take multiple loans" }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "processor": [{
+                "name": "process_quiz_answer",
+                "payload_template": {
+                    "question": "Q2",
+                    "answer_id": "{{id}}",
+                    "answer_value": "{{value}}"
+                },
+                "wait": true
+            }]
+        },
+        {
+            "id": "step4",
+            "name": "Question 3",
+            "sequence_no": 4,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step5",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {
+                        "type": "text",
+                        "text": "Q3: What is the ideal credit utilization ratio?"
+                    },
+                    "body": {
+                        "text": "Choose one option:"
+                    },
+                    "footer": {
+                        "text": "Powered by Financial Literacy"
+                    },
+                    "action": {
+                        "button": "Select Answer",
+                        "sections": [
+                            {
+                                "title": "Options",
+                                "rows": [
+                                    { "id": "q3_a", "title": "Option A", "description": "Below 30%" },
+                                    { "id": "q3_b", "title": "Option B", "description": "50%-70%" },
+                                    { "id": "q3_c", "title": "Option C", "description": "Above 80%" }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "processor": [{
+                "name": "process_quiz_answer",
+                "payload_template": {
+                    "question": "Q3",
+                    "answer_id": "{{id}}",
+                    "answer_value": "{{value}}"
+                },
+                "wait": true
+            }]
+        },
+        {
+            "id": "step5",
+            "name": "Result",
+            "sequence_no": 5,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "🎉 You've completed the quiz! We'll now show you your results."
+            },
+            "processor": [{
+                "name": "process_quiz_result",
+                "payload_template": {
+                    "user_id": "{{user_id}}"
+                }
+            }]
+        }
+    ],
+    "is_active": true
+}

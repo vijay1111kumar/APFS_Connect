@@ -1,13 +1,13 @@
 {
-    "name": "Yo Baby",
-    "id": "yo_flow",
-    "trigger": "yo!!",
+    "name": "Welcome Flow",
+    "id": "welcome_flow",
+    "trigger": "hi",
     "start": "step1",
     "end": "step2",
     "steps": [
         {
             "id": "step1",
-            "name": "love_at_first_sight",
+            "name": "Welcome Message",
             "sequence_no": 1,
             "type": "message",
             "action": "send_message",
@@ -15,29 +15,21 @@
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Yo Baby!!"
-            },
-            "processor": []
+                "body": "🌟 *Welcome to Aparoksha Financial Services!* 🌟\n We're here to help you with your two-wheeler loan needs. How can we assist you today? 🚀"
+            }
         },
         {
             "id": "step2",
-            "name": "send_heart",
-            "sequence_no": 2,
+            "name": "Final Message",
+            "sequence_no": 3,
             "type": "message",
             "action": "send_message",
             "next_step": null,
             "is_active": true,
             "content": {
                 "type": "text",
-                "body": "Wassupp?"
-            },
-            "processor": [{
-                "wait": true,
-                "name": "process_love",
-                "payload_template": {
-                    "user_response": "{{user_response}}"
-                }
-            }]
+                "body": "For quick access to our services, just type `/` "
+            }
         }
     ],
     "is_active": true

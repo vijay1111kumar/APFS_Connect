@@ -1,0 +1,117 @@
+{
+    "name": "Report an Issue Flow",
+    "id": "report_issue_flow",
+    "trigger": "/issue",
+    "start": "step1",
+    "end": "step4",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Welcome Message",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Hi there! 👋\nWe're here to help you with any issues. Please select the category of your issue to get started."
+            }
+        },
+        {
+            "id": "step2",
+            "name": "Please select your sue",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {
+                        "type": "text",
+                        "text": "📋 Issue Categories"
+                    },
+                    "body": {
+                        "text": "Select the issue category that best describes your concern:"
+                    },
+                    "footer": {
+                        "text": "Aparoksha Financial Services Pvt Ltd"
+                    },
+                    "action": {
+                        "button": "Select an Option",
+                        "sections": [
+                            {
+                                "title": "Loan & EMI Issues",
+                                "rows": [
+                                    { "id": "emi_not_reflected", "title": "Incorrect EMI Status", "description": "EMI payment not updated in the system." },
+                                    { "id": "emi_calculation_error", "title": "Wrong EMI Amount", "description": "Incorrect EMI amount or duration." }
+                                ]
+                            },
+                            {
+                                "title": "Document Issues",
+                                "rows": [
+                                    { "id": "document_not_received", "title": "Documents Not Received", "description": "Loan agreement or EMI schedule not received." },
+                                    { "id": "incorrect_document", "title": "Document Error", "description": "Errors in your loan documents." }
+                                ]
+                            },
+                            {
+                                "title": "Other Issues",
+                                "rows": [
+                                    { "id": "insurance_query", "title": "Insurance Related Query", "description": "Issues with bike insurance renewal or details." },
+                                    { "id": "general_support", "title": "Talk to Support", "description": "Other concerns or queries." }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "processor": [{
+                "name": "process_issue_category",
+                "payload_template": {
+                    "user_id": "{{user_id}}",
+                    "issue_category": "{{id}}"
+                },
+                "wait": true
+            }]
+        },
+        {
+            "id": "step3",
+            "name": "Describe the Issue",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step4",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Got it! 📝\n\nPlease describe your issue in detail so we can assist you better."
+            },
+            "processor": [{
+                "name": "process_issue_description",
+                "wait": true,
+                "payload_template": {
+                    "user_id": "{{user_id}}",
+                    "issue_details": "{{user_response}}",
+                    "issue_category": "{{issue_category}}"
+                }
+            }]
+        },
+        {
+            "id": "step4",
+            "name": "Confirmation Message",
+            "sequence_no": 4,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Thank you for reporting the issue! 🙏\nOur support team will review your concern and get back to you shortly. You can type `/help` anytime for further assistance."
+            }
+        }
+    ],
+    "is_active": true
+}

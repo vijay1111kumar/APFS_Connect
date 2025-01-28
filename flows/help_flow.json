@@ -1,0 +1,49 @@
+{
+    "name": "General Help Flow",
+    "id": "general_help_flow",
+    "trigger": "/help",
+    "start": "step1",
+    "end": "step3",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Welcome Message",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Hi! I'm here to assist you. Here are some commands you can use:"
+            }
+        },
+        {
+            "id": "step2",
+            "name": "Command List",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "/bike - Explore Ducati bikes\n/emi_reminder - Get EMI payment reminders\n/documents - Fetch customer loan documents\n/insurance_reminder - Renew insurance\n/apply_loan - Apply for a two-wheeler loan\n/check_status - Check loan application status\nyo!! - A fun conversation"
+            }
+        },
+        {
+            "id": "step3",
+            "name": "Exit Message",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Type any of the commands to get started!"
+            }
+        }
+    ],
+    "is_active": true
+}

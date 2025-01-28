@@ -1,0 +1,42 @@
+{
+    "name": "Fetch Customer Loan Info Flow",
+    "id": "fetch_loan_info_flow",
+    "trigger": "/info",
+    "start": "step1",
+    "end": "step2",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Fetch Loan Details",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "processor": [{
+                "name": "process_fetch_loan_details",
+                "payload_template": {
+                    "user_id": "{{user_id}}"
+                }
+            }],
+            "content": {
+                "type": "text",
+                "body": "Fetching your loan details... 📄"
+            }
+        },
+        {
+            "id": "step2",
+            "name": "Fetch Loan Details",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "we are happy to serve you, please let us know if you need anything else 😎"
+            }
+        }
+    ],
+    "is_active": true
+}

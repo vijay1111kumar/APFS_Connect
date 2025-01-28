@@ -1,0 +1,113 @@
+{
+    "name": "Enhanced Two-Wheeler Loan FAQ Flow",
+    "id": "enhanced_two_wheeler_loan_faq_flow",
+    "trigger": "/faq",
+    "start": "step1",
+    "end": "step4",
+    "steps": [
+        {
+            "id": "step1",
+            "name": "Welcome Message",
+            "sequence_no": 1,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step2",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Welcome to our FAQ section for two-wheeler loans! How can we assist you today? Please select a topic to proceed."
+            }
+        },
+        {
+            "id": "step2",
+            "name": "List of FAQs",
+            "sequence_no": 2,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step3",
+            "is_active": true,
+            "content": {
+                "type": "interactive",
+                "body": {
+                    "type": "list",
+                    "header": {
+                        "type": "text",
+                        "text": "Frequently Asked Questions"
+                    },
+                    "body": {
+                        "text": "Select a topic to get detailed answers:"
+                    },
+                    "footer": {
+                        "text": "Powered by Your Trusted Loan Partner"
+                    },
+                    "action": {
+                        "button": "Select Topic",
+                        "sections": [
+                            {
+                                "title": "Loan Basics",
+                                "rows": [
+                                    { "id": "apply_loan", "title": "Loan Application", "description": "How to apply for a loan?" },
+                                    { "id": "eligibility", "title": "Eligibility", "description": "What are the criteria?" },
+                                    { "id": "documents", "title": "Required Documents", "description": "Which documents are needed?" }
+                                ]
+                            },
+                            {
+                                "title": "Loan Management",
+                                "rows": [
+                                    { "id": "check_status", "title": "Loan Status", "description": "How to check status?" },
+                                    { "id": "emi_calculator", "title": "EMI Calculator", "description": "How to calculate EMI?" },
+                                    { "id": "topup_loan", "title": "Top-Up Loan", "description": "Eligibility for top-up loans." }
+                                ]
+                            },
+                            {
+                                "title": "Other Queries",
+                                "rows": [
+                                    { "id": "insurance_renewal", "title": "Insurance Renewal", "description": "Steps to renew bike insurance." },
+                                    { "id": "contact_support", "title": "Support", "description": "How to contact customer support?" },
+                                    { "id": "foreclosure", "title": "Foreclosure", "description": "Can I foreclose my loan early?" }
+                                ]
+                            }
+                        ]
+                    },
+                    "processor": [
+                        {
+                            "name": "process_faq_selection",
+                            "wait": true,
+                            "payload_template": {
+                                "user_id": "{{user_id}}",
+                                "topic_id": "{{id}}"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "id": "step3",
+            "name": "Topic Details",
+            "sequence_no": 3,
+            "type": "message",
+            "action": "send_message",
+            "next_step": "step4",
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "Fetching detailed information for your selected topic..."
+            }
+        },
+        {
+            "id": "step4",
+            "name": "Catch-All Response",
+            "sequence_no": 4,
+            "type": "message",
+            "action": "send_message",
+            "next_step": null,
+            "is_active": true,
+            "content": {
+                "type": "text",
+                "body": "If your query isn't listed, feel free to contact us directly. Our team is happy to assist!"
+            }
+        }
+    ],
+    "is_active": true
+}

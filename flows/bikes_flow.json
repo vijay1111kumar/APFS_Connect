@@ -1,7 +1,7 @@
 {
     "name": "Buy Bike Flow",
     "id": "bike_flow",
-    "trigger": "bike",
+    "trigger": "/test_ride",
     "start": "step1",
     "end": "step6",
     "steps": [
