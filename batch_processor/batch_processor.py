@@ -8,6 +8,8 @@ from batch_processor.publisher import Publish
 from database.models import Campaign
 from utils.logger import LogManager
 from database import get_db
+from database.models import Promotion, Remainder
+
 
 UPLOAD_DIR = "upload"
 log_manager = LogManager()
@@ -21,25 +23,23 @@ class BatchProcessor:
         self.publish = Publish()
 
     def process_batch(self, campaign_data: dict):
-        
-        flow_id = ""
-        campaign_id = campaign_data.get("id", "")
-        customer_excel_file = campaign_data.get("customer_excel_file", "")
         activity_type = campaign_data.get("activity_type", "")
+        activity_id = campaign_data.get("activity_id", "")
+        customer_excel_file = campaign_data.get("customer_excel_file", "")
         excel_file_path = os.path.join(UPLOAD_DIR, customer_excel_file)
+        excel_data = self.uploader.parse_excel(excel_file_path)
 
-        data = self.uploader.parse_excel(excel_file_path)
         with get_db() as db:
-            campaign = db.query(Campaign).filter_by(id=campaign_id).first()
-            if campaign:
-                flow_id = campaign.fetch_campaign_connected_flow(db)
-                
-        if activity_type == "Promotion":
-            self.promotions.process_promotional_flow(flow_id, data)
-        
-        if activity_type == "Remainder":
-            self.reminders.process_reminders(excel_file_path, data, global_retry_attempts=3, global_retry_interval=10)
-            
+            if activity_type == "Promotion":
+                promotion_data = db.query(Promotion).filter_by(id=activity_id).first().to_dict()
+                promotion_data.update({"campaign_job_id": campaign_data.get("job_id")})
+                self.promotions.process_batch(promotion_data, excel_data)
+
+            elif activity_type == "Remainder":
+                remainder_data = db.query(Remainder).filter_by(id=activity_id).first().to_dict()
+                remainder_data.update({"campaign_job_id": campaign_data.get("job_id")})
+                self.reminders.process_batch(remainder_data, excel_data)
+
         # self.archive_file(file_path)
 
     def archive_file(file_path: str, archive_dir: str = "./archive") -> None:
