@@ -9,7 +9,6 @@ from database.models import Flow
 from utils.validators import SchemaValidator
 
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_, and_
 from datetime import datetime, timedelta
 from database.models import CampaignMetrics, Campaign, Flow, Promotion, Remainder, CampaignJob
 from sqlalchemy_serializer import serialize_collection

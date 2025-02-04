@@ -32,6 +32,7 @@ class CampaignSchedulerResource(BaseResource):
             campaign_data = {
                 "campaign_id" : data.get("campaign_id", ""),
                 "activity_type" : data.get("activity_type", ""),
+                "activity_id" : data.get("activity_id", ""),
                 "schedule_time" : data.get("schedule_time", ""),
                 "excel_file" : data.get("customer_excel_file", ""),
                 "repeat_count" : data.get("repeat_count", 0),
