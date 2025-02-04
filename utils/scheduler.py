@@ -1,5 +1,6 @@
 import pytz
 
+from uuid import uuid4
 from celery import Celery
 from datetime import datetime, timedelta
 
@@ -13,8 +14,8 @@ logger = log_manager.get_logger("scheduler")
 
 celery_app = Celery(
     'scheduler',
-    broker='redis://localhost:6379/0',
-    backend='redis://localhost:6379/0',
+    broker='redis://localhost:6379/10',
+    backend='redis://localhost:6379/10',
 )
 celery_app.conf.update(
     result_expires=3600,
@@ -39,6 +40,8 @@ class CampaignScheduler:
             schedule_time = datetime.strptime(schedule_time, "%Y-%m-%d %H:%M:%S")
         schedule_time = ensure_timezone(schedule_time)
 
+        job_id = str(uuid4())
+        campaign_data["job_id"] = job_id
         campaign_data["current_attempt"] = 1
         job = celery_app.send_task(
             'execute_campaign',
@@ -46,8 +49,8 @@ class CampaignScheduler:
             eta=schedule_time,
         )
 
-        self.create_campaign_job(job.id, campaign_id, schedule_time, repeat_count, repeat_interval_value)
-        logger.info(f"Campaign {campaign_id} scheduled with job ID {job.id} for execution at {schedule_time}")
+        self.create_campaign_job(job_id, campaign_id, schedule_time, repeat_count, repeat_interval_value)
+        logger.info(f"Campaign {campaign_id} scheduled with job ID {job_id} for execution at {schedule_time}")
 
 
     @staticmethod
@@ -76,9 +79,9 @@ def execute_campaign(self, campaign_data: dict, user_id: str):
     excel_file = campaign_data.get("excel_file")
 
     try:
+        update_job_status(campaign_id, "InProcess")
         campaign_scheduler.batch_processor.process_batch(campaign_data)
         logger.info(f"Processed {activity_type} for Campaign {campaign_id} with file {excel_file}")
-        update_job_status(campaign_id, "InProcess")
     except Exception as e:
         logger.error(f"Error executing campaign {campaign_id}: {e}")
         update_job_status(campaign_id, "Failed")
