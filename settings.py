@@ -23,13 +23,16 @@ DATASET_DIR = "datasets"
 # Whatsapp Account Credentials
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN", "")
 PHONE_NUMBER = os.getenv("PHONE_NUMBER", "")
-WHATSAPP_ACCOUNT_ID = os.getenv("WHATSAPP_ACCOUNT_ID", "")
+APAROKSHA_WHATSAPP_ACCOUNT_ID = os.getenv("APAROKSHA_WHATSAPP_ACCOUNT_ID", "")
 VERSION = os.getenv("VERSION", "v21.0")
 
-BASE_URL = f"https://graph.facebook.com/{VERSION}/{WHATSAPP_ACCOUNT_ID}/messages"
-MEDIA_URL = f"https://graph.facebook.com/{VERSION}/{WHATSAPP_ACCOUNT_ID}/media"
+
+BASE_URL = f"https://graph.facebook.com/{VERSION}/{APAROKSHA_WHATSAPP_ACCOUNT_ID}/messages"
+MEDIA_URL = f"https://graph.facebook.com/{VERSION}/{APAROKSHA_WHATSAPP_ACCOUNT_ID}/media"
 HEADERS = {
     "Authorization": f"Bearer {ACCESS_TOKEN}",
     "Content-Type": "application/json",
 }
 
+TITAN_USERNAME = os.getenv("TITAN_USERNAME", "")
+TITAN_PASSWORD = os.getenv("TITAN_PASSWORD", "")

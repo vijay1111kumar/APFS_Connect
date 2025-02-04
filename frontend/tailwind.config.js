@@ -18,6 +18,16 @@ module.exports = {
         focus: "#D9DD92",
         graph: "#D9DD92"
       },
+      animation: {
+        fade: 'fadeOut 1s ease-in-out',
+      },
+      keyframes: theme => ({
+        fadeOut: {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+      }),
+
     },
   },
   plugins: [

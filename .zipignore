@@ -1,0 +1,10 @@
+.env
+__pycache__
+logs/
+datasets/
+DOCS/
+.git/
+*.log
+tmp/
+*__py_cache
+

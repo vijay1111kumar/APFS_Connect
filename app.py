@@ -881,7 +881,7 @@ app.req_options.media_handlers.update({
 
 # Whatsapp Webhook
 app.add_route('/whatsapp', WhatsAppWebhook())
-
+app.add_route("/apfsconnect/api/overview", analytics, suffix="overview")
 # Promotions endpoints
 promotions = PromotionResource(logger)
 app.add_route("/apfsconnect/api/promotions", promotions)          # For POST and GET all
@@ -901,6 +901,7 @@ campaigns = CampaignResource(logger)
 app.add_route("/apfsconnect/api/campaigns", campaigns)            # For POST and GET all
 app.add_route("/apfsconnect/api/campaigns/{id}", campaigns)       # For GET, PATCH, DELETE by ID
 app.add_route("/apfsconnect/api/campaigns/{id}/metrics", campaigns)
+app.add_route("/apfsconnect/api/campaigns/{id}/jobs", campaigns)
 
 # Remainders endpoints
 remainders = RemainderResource(logger)

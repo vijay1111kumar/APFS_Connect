@@ -57,7 +57,7 @@ const FlowModal = ({ onClose, onFlowCreated, setGlobalAlert }) => {
       name: flowName,
       trigger,
       is_active: isActive,
-      flow_file: uploadedFile?.fileName || "", // Use uploaded file's reference
+      flow_file: uploadedFile?.name || "", // Use uploaded file's reference
       created_by: "APFS0001", // Replace with the authenticated user context
     };
 

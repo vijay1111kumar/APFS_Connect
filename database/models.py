@@ -16,6 +16,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy_json import mutable_json_type
+
 
 from . import Base
 
@@ -158,7 +160,7 @@ class CampaignUserConversationMetadata(Base, SerializerMixin):
     last_message_at = Column(DateTime)
     total_time_spent = Column(Interval)
     created_at = Column(DateTime, default=datetime.datetime.now)
-
+    message_history = Column(mutable_json_type(dbtype=JSONB, nested=True))
 
 class CampaignMetrics(Base, SerializerMixin):
     __tablename__ = "campaign_metrics"

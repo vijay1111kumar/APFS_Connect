@@ -3,7 +3,7 @@ import os
 import json
 import falcon
 from typing import Dict, List
-from core.messaging import execute_flow, run_processor, send_text_message
+from core.messaging import execute_flow, run_processor, send_text_message, log_conversation
 
 sys.path.append("../APFS_Connect/")
 from utils.logger import LogManager
@@ -59,7 +59,8 @@ class WhatsAppWebhook:
         message = messages[0]
         user_id = message.get("from", "")
         message_type = message.get("type", "")
-
+        
+        log_conversation(user_id, message)
         logger.info(f"Incoming message from user: {user_id}, type: {message_type} message >> {message.get(message_type, '')}")
         self.handle_message(user_id, message, resp)
 
@@ -89,12 +90,13 @@ class WhatsAppWebhook:
 
     def handle_text_message(self, user_id: str, message: Dict, resp: falcon.Response) -> None:
 
-        text = message.get("text", {}).get("body", "")
+        text = message.get("text", {}).get("body", "").lower()
         fresh_flow = global_registry.get_flow_by_trigger(text)
         resume_from_step = temp_registry.get_user_current_step(user_id)
         flow_id = temp_registry.get_user_current_flow(user_id)
         
         if fresh_flow:
+            resume_from_step = {}
             flow_id = fresh_flow["id"]
             temp_registry.clear_user_state(user_id)
             logger.info(f"Triggering flow: {flow_id} for user: {user_id}")
@@ -115,13 +117,16 @@ class WhatsAppWebhook:
         interactive = message.get("interactive", {})
         interactive_type = interactive.get("type", "")
 
-        if interactive_type not in ["list_reply", "button_reply"]:
+        if interactive_type == "nfm_reply":
+            return
+
+        elif interactive_type not in ["list_reply", "button_reply"]:
             logger.warning(f"Unsupported interactive type: {interactive_type}, user: {user_id}")
             send_text_message(user_id, "Unsupported interactive type. Please try again.")
             resp.media = {"message": "Unsupported interactive type."}
             return
 
-        reply_id = interactive.get(interactive_type, {}).get("id", "")
+        reply_id = interactive.get(interactive_type, {}).get("id", "").lower()
         reply_title = interactive.get(interactive_type, {}).get("title", "")
 
         fresh_flow = global_registry.get_flow_by_trigger(reply_id)
@@ -129,6 +134,7 @@ class WhatsAppWebhook:
         flow_id = temp_registry.get_user_current_flow(user_id)
         
         if fresh_flow:
+            resume_from_step = {}
             temp_registry.clear_user_state(user_id)
             flow_id = fresh_flow["id"]
             logger.info(f"Triggering flow: {flow_id} for user: {user_id}")

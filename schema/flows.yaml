@@ -4,27 +4,9 @@ id:
 name:
   type: str
   mandatory: true
-description:
+trigger:
   type: str
   mandatory: false
-connected_flow:
-  type: str
-  mandatory: false
-promotion_type:
-  type: str
-  mandatory: true
-header_message:
-  type: str
-  mandatory: true
-footer_message:
-  type: str
-  mandatory: false
-message_body_type:
-  type: enum
-  mandatory: true
-message_body:
-  type: str
-  mandatory: true
 is_active:
   type: bool
   mandatory: false
@@ -40,6 +22,6 @@ modified_by:
 modified_at:
   type: datetime
   mandatory: false
-excel_file:
+flow_file:
   type: str
   mandatory: false

@@ -1,4 +1,12 @@
 .env
+alembic.ini
+
 __pycache__
+
+venv/
+DOCS/
 logs/
+upload/
 datasets/
+migrations/
+frontend_sample/
