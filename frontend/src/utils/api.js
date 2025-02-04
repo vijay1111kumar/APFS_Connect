@@ -66,15 +66,6 @@ export const fetchCampaignsForPromotion = async (id) => {
   }
 };
 
-export const fetchCampaignMetrics = async (campaignId) => {
-  try {
-    const { data } = await apiClient.get(`/campaigns/${campaignId}/metrics`);
-    return data.data;
-  } catch (error) {
-      console.error("Failed to fetch campaigns for promotion");
-      throw error;
-  }
-};
 
 export const fetchPromotionsPerformance = async () => {
   try {
@@ -129,6 +120,57 @@ export const fetchPromotionUsers = async (id) => {
     return data;
   } catch (error) {
     console.error("Failed to fetch promotion users");
+    throw error;
+  }
+};
+
+export const fetchCampaignDetails = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/campaigns/${id}`);
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching campaign details:", error);
+    throw error;
+  }
+};
+
+export const fetchCampaignMetrics = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/campaigns/${id}/metrics`);
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching campaign metrics:", error);
+    throw error;
+  }
+};
+
+export const fetchUsersForCampaign = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/campaigns/${id}/users`);
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching users for campaign:", error);
+    throw error;
+  }
+};
+
+
+export const fetchCampaignJobs = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/campaigns/${id}/jobs`);
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching campaign jobs:", error);
+    throw error;
+  }
+};
+
+export const fetchCampaignJobMetrics = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/campaigns/jobs/${id}/metrics`);
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching campaign metrics:", error);
     throw error;
   }
 };
@@ -201,33 +243,43 @@ export const createFlow = async (flowData) => {
   }
 };
 
-export const updateFlow = async (flowId, updatedData) => {
+export const fetchFlowDetails = async (id) => {
   try {
-    const { data } = await apiClient.patch(`/flows/${flowId}`, updatedData);
-    return data; 
+    const { data } = await apiClient.get(`/flows/${id}`);
+    return data.data; 
   } catch (error) {
-    console.error(`Error updating flow with ID ${flowId}:`, error);
+    console.error("Error fetching flows:", error);
     throw error;
   }
 };
 
-export const deleteFlow = async (flowId) => {
+export const updateFlow = async (id, updatedData) => {
   try {
-    const { data } = await apiClient.delete(`/flows/${flowId}`);
+    const { data } = await apiClient.patch(`/flows/${id}`, updatedData);
     return data; 
   } catch (error) {
-    console.error(`Error deleting flow with ID ${flowId}:`, error);
+    console.error(`Error updating flow with ID ${id}:`, error);
     throw error;
   }
 };
 
-export const toggleFlowStatus = async (flowId, isActive) => {
+export const deleteFlow = async (id) => {
   try {
-    const endpoint = isActive ? `/flows/${flowId}/activate` : `/flows/${flowId}/deactivate`;
+    const { data } = await apiClient.delete(`/flows/${id}`);
+    return data; 
+  } catch (error) {
+    console.error(`Error deleting flow with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+export const toggleFlowStatus = async (id, isActive) => {
+  try {
+    const endpoint = isActive ? `/flows/${id}/activate` : `/flows/${id}/deactivate`;
     const { data } = await apiClient.post(endpoint); // Assuming POST to toggle activation
     return data; // Return the updated flow status
   } catch (error) {
-    console.error(`Error toggling flow status for ID ${flowId}:`, error);
+    console.error(`Error toggling flow status for ID ${id}:`, error);
     throw error;
   }
 };
@@ -241,6 +293,38 @@ export const fetchFlowsPerformance = async () => {
     throw error;
   }
 };
+
+export const fetchPromotionsWithFlow = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/flows/${id}/promotions`);
+    return data.data;
+  } catch (error) {
+    console.error(`Failed to promotions with flow as ${id}`, error);
+    throw error;
+  }
+};
+
+
+export const fetchRemaindersWithFlow = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/flows/${id}/remainders`);
+    return data.data;
+  } catch (error) {
+    console.error(`Failed to remainders with flow as ${id}`, error);
+    throw error;
+  }
+};
+
+export const fetchCampaignsWithFlow = async (id) => {
+  try {
+    const { data } = await apiClient.get(`/flows/${id}/campaigns`);
+    return data.data;
+  } catch (error) {
+    console.error(`Failed to campaigns with flow as ${id}`, error);
+    throw error;
+  }
+};
+
 
 // Upload Function
 // -----------------------------------------------
